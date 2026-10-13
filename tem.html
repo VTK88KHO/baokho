@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chụp tem</title>
+<style>
+ body{font-family:Arial,sans-serif;margin:16px;color:#222;background:#fff}
+ h2{margin:0 0 4px;color:#1f4e79;font-size:20px}
+ .s{color:#444;margin:3px 0}
+ .note{background:#fff3cd;padding:8px;border-radius:8px;margin:10px 0}
+ .b{display:block;width:100%;padding:14px;margin:8px 0;font-size:17px;border:1px solid #1f4e79;border-radius:10px;background:#fff;color:#1f4e79}
+ #chup{background:#1f4e79;color:#fff;border:none}
+ #go{background:#2e7d32;color:#fff;border:none;font-weight:bold;display:none}
+ input[type=text]{font-size:17px;padding:11px;width:100%;box-sizing:border-box;margin:4px 0;border:1px solid #aaa;border-radius:8px}
+ .tn{display:inline-block;padding:9px 14px;margin:3px;border:1px solid #1f4e79;border-radius:18px;background:#fff;color:#1f4e79;font-size:15px}
+ .tn.on{background:#1f4e79;color:#fff}
+ #ds{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+ #ds div{position:relative}
+ #ds img{width:92px;height:92px;object-fit:cover;border-radius:8px;border:1px solid #ccc}
+ #ds span{position:absolute;top:-6px;right:-6px;background:#c00;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:14px}
+ #tt{margin-top:10px;color:#1f4e79;font-weight:bold}
+ #bar{height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;display:none;margin-top:6px}
+ #bar i{display:block;height:100%;width:0;background:#2e7d32}
+ #ok{display:none;text-align:center;font-size:20px;color:#2e7d32;margin-top:40px}
+ #ok small{color:#444;font-size:15px}
+ label{display:block;margin:8px 0}
+</style>
+</head>
+<body>
+<div id="f">
+ <h2 id="tieu">📷 Ảnh tem</h2>
+ <div id="thu" class="note" style="display:none">🧪 TRANG THỬ – kết quả gửi về Telegram riêng của chị, không vào nhóm kho.</div>
+ <div id="info" class="s"></div>
+ <div id="hoi"></div>
+ <p><b>Người gửi:</b> <small>(bấm tên của bạn)</small></p>
+ <div id="nut"></div>
+ <input type="text" id="n" placeholder="Tên bạn">
+ <input id="p" type="file" accept="image/*" multiple style="display:none">
+ <input id="x" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" multiple style="display:none">
+ <button class="b" id="chup">📷 Chụp / chọn ảnh tem</button>
+ <button class="b" id="chonfile">📄 Chọn file Excel serial</button>
+ <p class="s" style="font-size:13px">Gửi được ảnh tem, ảnh chụp màn hình danh sách serial, hoặc file Excel của phần mềm quét mã – chung 1 lần cũng được.</p>
+ <div id="dsf" class="s"></div>
+ <div id="ds"></div>
+ <button class="b" id="go"></button>
+ <div id="tt"></div>
+ <div id="bar"><i></i></div>
+</div>
+<div id="ok">✅ Đã gửi<br><small id="kq"></small><br><br><small>Bạn có thể đóng trang này.</small></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script>
+// Link do bot tạo: tem.html?d=<số đơn>&t=<mã>&x=<link /exec của bot>[&thu=1]
+var Q = new URLSearchParams(location.search);
+var D = Q.get('d') || '', T = Q.get('t') || '', THU = Q.get('thu') === '1' ? 1 : 0, EXEC = Q.get('x') || '';
+var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
+var $ = function (id) { return document.getElementById(id); };
+$('tieu').textContent = '📷 Ảnh tem · ' + D;
+if (THU) $('thu').style.display = 'block';
+try { var n0 = localStorage.getItem('tenTem'); if (n0) $('n').value = n0; } catch (e) {}
+
+// Thông tin đơn tải ngầm – trang đã dùng được ngay, không phải chờ
+if (!D || !T || !EXEC) { $('info').textContent = 'Link không hợp lệ.'; }
+else fetch(EXEC + '?api=teminfo&d=' + encodeURIComponent(D) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
+  .then(function (r) { return r.json(); }).then(function (j) {
+    if (!j.ok) { $('info').textContent = j.err || 'Lỗi'; return; }
+    $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
+    if (j.daCo && j.daCo.n) {
+      CO = 1;
+      $('hoi').innerHTML = '<div class="note"><b>Đơn này đã có ' + j.daCo.n + ' serial</b> (gửi lúc ' + esc(j.daCo.gio || '') + '). Lần này:' +
+        '<label><input type="radio" name="cd" value="them"> ➕ <b>Gửi THÊM</b> (giữ serial cũ)</label>' +
+        '<label><input type="radio" name="cd" value="lai"> 🔄 <b>Gửi LẠI</b> – lần trước gửi nhầm, HỦY serial cũ</label></div>';
+    }
+    var ten = j.ten || [];
+    $('nut').innerHTML = ten.map(function (x) { return '<button type="button" class="tn">' + esc(x) + '</button>'; }).join('');
+    [].forEach.call(document.querySelectorAll('.tn'), function (b) { b.onclick = function () { chonTen(b); }; });
+    if (!$('n').value && ten[0]) $('n').value = ten[0];
+    danhDauTen();
+  }).catch(function () {});
+
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function chonTen(b) { $('n').value = b.textContent; danhDauTen(); }
+function danhDauTen() { var v = $('n').value; [].forEach.call(document.querySelectorAll('.tn'), function (b) { b.classList.toggle('on', b.textContent === v); }); }
+$('n').oninput = danhDauTen;
+$('chup').onclick = function () { $('p').click(); };
+$('chonfile').onclick = function () { $('x').click(); };
+$('go').onclick = gui;
+
+function ve() {
+  var h = '';
+  for (var i = 0; i < ds.length; i++) h += '<div><img src="data:image/jpeg;base64,' + ds[i] + '"><span data-i="' + i + '">✕</span></div>';
+  $('ds').innerHTML = h;
+  [].forEach.call(document.querySelectorAll('#ds span'), function (s) { s.onclick = function () { if (!dangGui) { ds.splice(+s.getAttribute('data-i'), 1); ve(); } }; });
+  $('go').style.display = (ds.length || sr.length) ? 'block' : 'none';
+  $('go').textContent = '✅ GỬI ' + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
+  $('dsf').innerHTML = sr.length ? '📄 ' + esc(tenFile.join(', ')) + ': <b>' + sr.length + ' serial</b> <a href="#" id="bof">✕ bỏ</a>' : '';
+  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; ve(); return false; };
+  $('chup').textContent = ds.length ? '📷 Chụp / chọn thêm ảnh' : '📷 Chụp / chọn ảnh tem';
+}
+// Nén ảnh ngay trên điện thoại cho gửi nhanh (vẫn đủ rõ để đọc serial)
+function nen(file, cb) {
+  var r = new FileReader();
+  r.onload = function () {
+    var i = new Image();
+    i.onload = function () {
+      var m = 1400, k = Math.min(1, m / Math.max(i.width, i.height));
+      var c = document.createElement('canvas'); c.width = i.width * k; c.height = i.height * k;
+      c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', 0.8).split(',')[1]);
+    };
+    i.onerror = function () { cb(''); };
+    i.src = r.result;
+  };
+  r.readAsDataURL(file);
+}
+$('p').onchange = function () {
+  var fs = [].slice.call(this.files || []); this.value = ''; var con = fs.length;
+  $('tt').textContent = con ? 'Đang xử lý ảnh…' : '';
+  fs.forEach(function (f) { nen(f, function (b) { if (b) ds.push(b); if (!--con) { $('tt').textContent = ''; ve(); } }); });
+};
+// Ghép nhiều ảnh thành 1 ảnh lưới -> nhóm Zalo chỉ nhận 1 tin
+function luoi(cb) {
+  if (ds.length === 1) { cb(ds[0]); return; }
+  var n = ds.length, cot = n <= 4 ? 2 : 3, hang = Math.ceil(n / cot), o = n <= 4 ? 900 : 640, g = 8;
+  var c = document.createElement('canvas'); c.width = cot * o + (cot + 1) * g; c.height = hang * o + (hang + 1) * g;
+  var x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); var con = n;
+  var xong = function () { if (!--con) cb(c.toDataURL('image/jpeg', 0.85).split(',')[1]); };
+  ds.forEach(function (b, i) {
+    var im = new Image();
+    im.onload = function () {
+      var k = Math.min(o / im.width, o / im.height), w = im.width * k, h = im.height * k;
+      x.drawImage(im, g + (i % cot) * (o + g) + (o - w) / 2, g + Math.floor(i / cot) * (o + g) + (o - h) / 2, w, h); xong();
+    };
+    im.onerror = xong; im.src = 'data:image/jpeg;base64,' + b;
+  });
+}
+// File Excel/CSV: cột A = serial, cột B = model (dòng trống model thì lấy model dòng trên)
+$('x').onchange = function () {
+  var fs = [].slice.call(this.files || []); this.value = '';
+  if (typeof XLSX === 'undefined') { alert('Trang chưa tải xong phần đọc Excel, đợi 2 giây rồi chọn lại.'); return; }
+  fs.forEach(function (f) {
+    var r = new FileReader();
+    r.onload = function (e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }), md = '', dem = 0, co = {};
+        sr.forEach(function (x) { co[x.serial] = 1; });
+        rows.forEach(function (r) {
+          var a = String(r[0] || '').split('|').join('').trim(), b = String(r[1] || '').split('|').join('').trim();
+          if (b) md = b;
+          if (!a || a.length < 4 || /serial|^s.n$|^stt$|^mã/i.test(a) || co[a]) return;
+          co[a] = 1; sr.push({ serial: a, model: md }); dem++;
+        });
+        tenFile.push(f.name + ' (' + dem + ')'); ve();
+        if (!dem) alert('Không thấy serial trong file ' + f.name + ' (serial phải ở cột A).');
+      } catch (er) { alert('Không đọc được file ' + f.name + ': ' + er.message); }
+    };
+    r.readAsArrayBuffer(f);
+  });
+};
+function gui() {
+  if (dangGui || (!ds.length && !sr.length)) return;
+  var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
+  var cd = 'them';
+  if (CO) {
+    var c = document.querySelector('input[name=cd]:checked');
+    if (!c) { alert('Chọn Gửi THÊM hay Gửi LẠI'); return; }
+    cd = c.value;
+    if (cd === 'lai' && !confirm('Hủy toàn bộ serial cũ của đơn này và thay bằng lần gửi này?')) return;
+  }
+  try { localStorage.setItem('tenTem', ten); } catch (e) {}
+  dangGui = true; $('go').disabled = true; $('chup').disabled = true; $('chonfile').disabled = true;
+  $('tt').textContent = 'Đang gửi… 0%'; $('bar').style.display = 'block';
+  var chay = function (lu) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', EXEC + '?api=tem');
+    xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
+    xhr.upload.onprogress = function (e) { if (e.lengthComputable) { var p = Math.round(e.loaded / e.total * 100); $('tt').textContent = 'Đang gửi… ' + p + '%'; $('bar').firstChild.style.width = p + '%'; } };
+    xhr.onload = function () {
+      var j = {}; try { j = JSON.parse(xhr.responseText); } catch (e) {}
+      if (!j.ok) return loi(j.err || ('máy chủ trả mã ' + xhr.status));
+      $('f').style.display = 'none';
+      $('kq').textContent = 'Đã nhận ' + (j.n ? j.n + ' ảnh' : '') + (j.n && j.f ? ' + ' : '') + (j.f ? j.f + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm sau.';
+      $('ok').style.display = 'block';
+      // Báo bot xử lý (chạy tiếp cả khi đã đóng trang)
+      try { fetch(EXEC + '?api=tem', { method: 'POST', body: JSON.stringify({ act: 'xl', id: j.id }), keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); } catch (e) {}
+    };
+    xhr.onerror = function () { loi('mất mạng'); };
+    xhr.send(JSON.stringify({ act: 'gui', d: D, t: T, thu: THU, ds: ds, lu: lu, n: ten, sr: sr, cd: cd }));
+  };
+  if (ds.length) luoi(chay); else chay('');
+}
+function loi(m) {
+  alert('Chưa gửi được: ' + m + '\nBấm GỬI để thử lại.');
+  dangGui = false; $('go').disabled = false; $('chup').disabled = false; $('chonfile').disabled = false;
+  $('tt').textContent = ''; $('bar').style.display = 'none';
+}
+</script>
+</body>
+</html>
