@@ -21,7 +21,8 @@
  #ds span{position:absolute;top:-6px;right:-6px;background:#c00;color:#fff;border-radius:50%;width:24px;height:24px;text-align:center;line-height:24px;font-size:14px}
  #tt{margin-top:10px;color:#1f4e79;font-weight:bold}
  #bar{height:8px;background:#e0e0e0;border-radius:4px;overflow:hidden;display:none;margin-top:6px}
- #bar i{display:block;height:100%;width:0;background:#2e7d32}
+ #bar i{display:block;height:100%;width:40%;background:#2e7d32;animation:chay 1.2s linear infinite}
+ @keyframes chay{from{margin-left:-40%}to{margin-left:100%}}
  #ok{display:none;text-align:center;font-size:20px;color:#2e7d32;margin-top:40px}
  #ok small{color:#444;font-size:15px}
  label{display:block;margin:8px 0}
@@ -171,23 +172,24 @@ function gui() {
   }
   try { localStorage.setItem('tenTem', ten); } catch (e) {}
   dangGui = true; $('go').disabled = true; $('chup').disabled = true; $('chonfile').disabled = true;
-  $('tt').textContent = 'Đang gửi… 0%'; $('bar').style.display = 'block';
+  $('tt').textContent = 'Đang gửi…'; $('bar').style.display = 'block';
   var chay = function (lu) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', EXEC + '?api=tem');
-    xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
-    xhr.upload.onprogress = function (e) { if (e.lengthComputable) { var p = Math.round(e.loaded / e.total * 100); $('tt').textContent = 'Đang gửi… ' + p + '%'; $('bar').firstChild.style.width = p + '%'; } };
-    xhr.onload = function () {
-      var j = {}; try { j = JSON.parse(xhr.responseText); } catch (e) {}
-      if (!j.ok) return loi(j.err || ('máy chủ trả mã ' + xhr.status));
-      $('f').style.display = 'none';
-      $('kq').textContent = 'Đã nhận ' + (j.n ? j.n + ' ảnh' : '') + (j.n && j.f ? ' + ' : '') + (j.f ? j.f + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm sau.';
-      $('ok').style.display = 'block';
-      // Báo bot xử lý (chạy tiếp cả khi đã đóng trang)
-      try { fetch(EXEC + '?api=tem', { method: 'POST', body: JSON.stringify({ act: 'xl', id: j.id }), keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); } catch (e) {}
-    };
-    xhr.onerror = function () { loi('mất mạng'); };
-    xhr.send(JSON.stringify({ act: 'gui', d: D, t: T, thu: THU, ds: ds, lu: lu, n: ten, sr: sr, cd: cd }));
+    // Gửi kiểu "đơn giản" (fetch + text/plain) – Google không chặn. Không dùng theo dõi % vì sẽ bị Google từ chối.
+    var t0 = Date.now(), dem = setInterval(function () { $('tt').textContent = 'Đang gửi… ' + Math.round((Date.now() - t0) / 1000) + ' giây'; }, 500);
+    fetch(EXEC + '?api=tem', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ act: 'gui', d: D, t: T, thu: THU, ds: ds, lu: lu, n: ten, sr: sr, cd: cd }) })
+      .then(function (r) { return r.text(); })
+      .then(function (txt) {
+        clearInterval(dem);
+        var j = {}; try { j = JSON.parse(txt); } catch (e) {}
+        if (!j.ok) return loi(j.err || 'máy chủ trả lời lạ');
+        $('f').style.display = 'none';
+        $('kq').textContent = 'Đã nhận ' + (j.n ? j.n + ' ảnh' : '') + (j.n && j.f ? ' + ' : '') + (j.f ? j.f + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm sau.';
+        $('ok').style.display = 'block';
+        // Báo bot xử lý (chạy tiếp cả khi đã đóng trang)
+        try { fetch(EXEC + '?api=tem', { method: 'POST', body: JSON.stringify({ act: 'xl', id: j.id }), keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); } catch (e) {}
+      })
+      .catch(function () { clearInterval(dem); loi('không kết nối được máy chủ'); });
   };
   if (ds.length) luoi(chay); else chay('');
 }
