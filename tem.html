@@ -88,15 +88,54 @@ $('chup').onclick = function () { $('p').click(); };
 $('chonfile').onclick = function () { $('x').click(); };
 $('go').onclick = gui;
 
+// ===== TẢI TRƯỚC: mỗi ảnh tự gửi lên ngay lúc chụp, nên bấm GỬI là xong luôn =====
+var B = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16);
+var soK = 0, hang = [], dangChay = 0, gv = 0, luoiK = '', luoiDung = '', hgLuoi = 0, fk = '', fkDung = '';
+var trang = {};   // k -> 0 đang tải, 1 xong, -1 lỗi
+function post(o, keep) {
+  return fetch(EXEC + '?api=tem', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(o), keepalive: !!keep })
+    .then(function (r) { return r.text(); }).then(function (t) { var j = {}; try { j = JSON.parse(t); } catch (e) {} return j; });
+}
+function tai(k, v) { trang[k] = 0; hang.push({ k: k, v: v, lan: 0 }); bom(); }
+function bom() {
+  while (dangChay < 3 && hang.length) (function (x) {
+    dangChay++;
+    post({ act: 'tai', d: D, t: T, thu: THU, id: B, k: x.k, b: x.v }).then(function (j) {
+      if (!j.ok) throw new Error(j.err || 'lỗi');
+      trang[x.k] = 1; x.v = null;
+    }).catch(function () {
+      if (++x.lan < 4) { hang.push(x); } else { trang[x.k] = -1; }
+    }).then(function () { dangChay--; bom(); kiem(); });
+  })(hang.shift());
+}
+function chuaXong() {
+  var ks = ds.map(function (x) { return x.k; }); if (ds.length > 1) ks.push(luoiK || '?'); if (sr.length) ks.push(fk || '?');
+  var loi1 = 0, cho = 0;
+  ks.forEach(function (k) { var s = trang[k]; if (s === 1) return; if (s === -1) loi1++; else cho++; });
+  return { cho: cho, loi: loi1 };
+}
+// Ảnh lưới (nhiều ảnh -> 1 ảnh) dựng lại sau mỗi lần thêm/bớt ảnh, rồi tải trước luôn
+function lamLuoi() {
+  clearTimeout(hgLuoi); luoiK = ''; var phien = ++gv;
+  if (ds.length < 2) return;
+  hgLuoi = setTimeout(function () {
+    luoi(function (b) { if (phien !== gv) return; luoiK = 'g' + phien; tai(luoiK, b); });
+  }, 500);
+}
+function lamFile() {
+  fk = ''; if (!sr.length) return;
+  fk = 'f' + (++soK); tai(fk, JSON.stringify(sr));
+}
+
 function ve() {
   var h = '';
-  for (var i = 0; i < ds.length; i++) h += '<div><img src="data:image/jpeg;base64,' + ds[i] + '"><span data-i="' + i + '">✕</span></div>';
+  for (var i = 0; i < ds.length; i++) h += '<div><img src="data:image/jpeg;base64,' + ds[i].b + '"><span data-i="' + i + '">✕</span></div>';
   $('ds').innerHTML = h;
-  [].forEach.call(document.querySelectorAll('#ds span'), function (s) { s.onclick = function () { if (!dangGui) { ds.splice(+s.getAttribute('data-i'), 1); ve(); } }; });
+  [].forEach.call(document.querySelectorAll('#ds span'), function (s) { s.onclick = function () { if (!dangGui) { ds.splice(+s.getAttribute('data-i'), 1); ve(); lamLuoi(); } }; });
   $('go').style.display = (ds.length || sr.length) ? 'block' : 'none';
   $('go').textContent = '✅ GỬI ' + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
   $('dsf').innerHTML = sr.length ? '📄 ' + esc(tenFile.join(', ')) + ': <b>' + sr.length + ' serial</b> <a href="#" id="bof">✕ bỏ</a>' : '';
-  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; ve(); return false; };
+  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; ve(); return false; };
   $('chup').textContent = ds.length ? '📷 Chụp / chọn thêm ảnh' : '📷 Chụp / chọn ảnh tem';
 }
 // Nén ảnh ngay trên điện thoại cho gửi nhanh (vẫn đủ rõ để đọc serial)
@@ -105,35 +144,40 @@ function nen(file, cb) {
   r.onload = function () {
     var i = new Image();
     i.onload = function () {
-      var m = 1400, k = Math.min(1, m / Math.max(i.width, i.height));
+      var m = 1280, k = Math.min(1, m / Math.max(i.width, i.height));
       var c = document.createElement('canvas'); c.width = i.width * k; c.height = i.height * k;
       c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-      cb(c.toDataURL('image/jpeg', 0.8).split(',')[1]);
+      cb(c.toDataURL('image/jpeg', 0.75).split(',')[1]);
     };
     i.onerror = function () { cb(''); };
     i.src = r.result;
   };
+  r.onerror = function () { cb(''); };
   r.readAsDataURL(file);
 }
 $('p').onchange = function () {
   var fs = [].slice.call(this.files || []); this.value = ''; var con = fs.length;
   $('tt').textContent = con ? 'Đang xử lý ảnh…' : '';
-  fs.forEach(function (f) { nen(f, function (b) { if (b) ds.push(b); if (!--con) { $('tt').textContent = ''; ve(); } }); });
+  fs.forEach(function (f) {
+    nen(f, function (b) {
+      if (b && ds.length < 30) { var k = 'a' + (++soK); ds.push({ b: b, k: k }); tai(k, b); }
+      if (!--con) { $('tt').textContent = ''; ve(); lamLuoi(); }
+    });
+  });
 };
 // Ghép nhiều ảnh thành 1 ảnh lưới -> nhóm Zalo chỉ nhận 1 tin
 function luoi(cb) {
-  if (ds.length === 1) { cb(ds[0]); return; }
-  var n = ds.length, cot = n <= 4 ? 2 : 3, hang = Math.ceil(n / cot), o = n <= 4 ? 900 : 640, g = 8;
-  var c = document.createElement('canvas'); c.width = cot * o + (cot + 1) * g; c.height = hang * o + (hang + 1) * g;
+  var n = ds.length, cot = n <= 4 ? 2 : 3, hang2 = Math.ceil(n / cot), o = n <= 4 ? 760 : 560, g = 8;
+  var c = document.createElement('canvas'); c.width = cot * o + (cot + 1) * g; c.height = hang2 * o + (hang2 + 1) * g;
   var x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); var con = n;
-  var xong = function () { if (!--con) cb(c.toDataURL('image/jpeg', 0.85).split(',')[1]); };
-  ds.forEach(function (b, i) {
+  var xong = function () { if (!--con) cb(c.toDataURL('image/jpeg', 0.8).split(',')[1]); };
+  ds.forEach(function (it, i) {
     var im = new Image();
     im.onload = function () {
       var k = Math.min(o / im.width, o / im.height), w = im.width * k, h = im.height * k;
       x.drawImage(im, g + (i % cot) * (o + g) + (o - w) / 2, g + Math.floor(i / cot) * (o + g) + (o - h) / 2, w, h); xong();
     };
-    im.onerror = xong; im.src = 'data:image/jpeg;base64,' + b;
+    im.onerror = xong; im.src = 'data:image/jpeg;base64,' + it.b;
   });
 }
 // File Excel/CSV: cột A = serial, cột B = model (dòng trống model thì lấy model dòng trên)
@@ -153,13 +197,15 @@ $('x').onchange = function () {
           if (!a || a.length < 4 || /serial|^s.n$|^stt$|^mã/i.test(a) || co[a]) return;
           co[a] = 1; sr.push({ serial: a, model: md }); dem++;
         });
-        tenFile.push(f.name + ' (' + dem + ')'); ve();
+        tenFile.push(f.name + ' (' + dem + ')'); ve(); lamFile();
         if (!dem) alert('Không thấy serial trong file ' + f.name + ' (serial phải ở cột A).');
       } catch (er) { alert('Không đọc được file ' + f.name + ': ' + er.message); }
     };
     r.readAsArrayBuffer(f);
   });
 };
+var choChot = null;
+function kiem() { if (choChot) choChot(); }
 function gui() {
   if (dangGui || (!ds.length && !sr.length)) return;
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
@@ -172,29 +218,31 @@ function gui() {
   }
   try { localStorage.setItem('tenTem', ten); } catch (e) {}
   dangGui = true; $('go').disabled = true; $('chup').disabled = true; $('chonfile').disabled = true;
-  $('tt').textContent = 'Đang gửi…'; $('bar').style.display = 'block';
-  var chay = function (lu) {
-    // Gửi kiểu "đơn giản" (fetch + text/plain) – Google không chặn. Không dùng theo dõi % vì sẽ bị Google từ chối.
-    var dem = 0;
-    fetch(EXEC + '?api=tem', { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ act: 'gui', d: D, t: T, thu: THU, ds: ds, lu: lu, n: ten, sr: sr, cd: cd }) })
-      .then(function (r) { return r.text(); })
-      .then(function (txt) {
-        clearInterval(dem);
-        var j = {}; try { j = JSON.parse(txt); } catch (e) {}
-        if (!j.ok) return loi(j.err || 'máy chủ trả lời lạ');
-        $('f').style.display = 'none';
-        $('kq').textContent = 'Đã nhận ' + (j.n ? j.n + ' ảnh' : '') + (j.n && j.f ? ' + ' : '') + (j.f ? j.f + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm sau.';
-        $('ok').style.display = 'block';
-        // Báo bot xử lý (chạy tiếp cả khi đã đóng trang)
-        try { fetch(EXEC + '?api=tem', { method: 'POST', body: JSON.stringify({ act: 'xl', id: j.id }), keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' } }); } catch (e) {}
-      })
-      .catch(function () { clearInterval(dem); loi('không kết nối được máy chủ'); });
+  var t0 = Date.now();
+  var chot = function () {
+    choChot = null;
+    var o = { act: 'chot', d: D, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiK : '', fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0 };
+    // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
+    post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
+    $('f').style.display = 'none';
+    $('kq').textContent = 'Đã nhận ' + (ds.length ? ds.length + ' ảnh' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm.';
+    $('ok').style.display = 'block';
   };
-  if (ds.length) luoi(chay); else chay('');
+  if (ds.length > 1 && !luoiK) { clearTimeout(hgLuoi); var phien = ++gv; luoi(function (b) { if (phien !== gv) return; luoiK = 'g' + phien; tai(luoiK, b); kiem(); }); }
+  choChot = function () {
+    var x = chuaXong();
+    if (x.loi) { choChot = null; return loi('mạng yếu, một số ảnh chưa lên được'); }
+    if (!x.cho) chot();
+  };
+  if (chuaXong().cho) { $('tt').textContent = 'Đang gửi nốt ảnh…'; $('bar').style.display = 'block'; }
+  kiem();
 }
 function loi(m) {
   alert('Chưa gửi được: ' + m + '\nBấm GỬI để thử lại.');
+  // ảnh lỗi -> tải lại từ đầu
+  ds.forEach(function (x) { if (trang[x.k] !== 1) tai(x.k, x.b); });
+  if (ds.length > 1 && trang[luoiK] !== 1) { luoiK = ''; lamLuoi(); }
+  if (sr.length && trang[fk] !== 1) lamFile();
   dangGui = false; $('go').disabled = false; $('chup').disabled = false; $('chonfile').disabled = false;
   $('tt').textContent = ''; $('bar').style.display = 'none';
 }
