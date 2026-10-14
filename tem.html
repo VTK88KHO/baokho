@@ -34,6 +34,18 @@
  <div id="thu" class="note" style="display:none">🧪 TRANG THỬ – kết quả gửi về Telegram riêng của chị, không vào nhóm kho.</div>
  <div id="info" class="s"></div>
  <div id="hoi"></div>
+ <div id="phieu" style="display:none">
+  <p><b>Loại:</b></p>
+  <label><input type="radio" name="lo" value="muon"> 🤝 <b>Cho mượn</b></label>
+  <label><input type="radio" name="lo" value="tra"> ↩️ <b>Trả hàng mượn</b> (hàng mượn mang về kho)</label>
+  <label><input type="radio" name="lo" value="ck"> 🚚 <b>Chuyển kho</b> sang kho khác</label>
+  <div id="denbox" style="display:none"><p><b>Chuyển đến:</b></p><div id="den"></div></div>
+  <div id="nvbox" style="display:none"><p><b id="nvnhan">Người mượn:</b></p>
+   <select id="nv" style="font-size:17px;padding:10px;width:100%;border:1px solid #aaa;border-radius:8px"><option value="">— chọn mã nhân viên —</option></select>
+   <p class="s" style="font-size:13px">Không thấy tên? Nhân viên nhắn mã NV của mình (vd MKT01) cho bot Zalo để đăng ký.</p></div>
+  <p><b id="gcnhan">Ghi chú:</b></p>
+  <input type="text" id="gc" placeholder="Ghi chú…">
+ </div>
  <p><b>Người gửi:</b> <small>(bấm tên của bạn)</small></p>
  <div id="nut"></div>
  <input type="text" id="n" placeholder="Tên bạn">
@@ -55,17 +67,33 @@
 // Link do bot tạo: tem.html?d=<số đơn>&t=<mã>&x=<link /exec của bot>[&thu=1]
 var Q = new URLSearchParams(location.search);
 var D = Q.get('d') || '', T = Q.get('t') || '', THU = Q.get('thu') === '1' ? 1 : 0, EXEC = Q.get('x') || '';
+var KK = Q.get('k') || '';   // link cố định của kho: chụp tem KHÔNG THEO ĐƠN (mượn / trả mượn / chuyển kho)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
-$('tieu').textContent = '📷 Ảnh tem · ' + D;
+$('tieu').textContent = KK ? '📷 Chụp tem không theo đơn' : '📷 Ảnh tem · ' + D;
+if (KK) {
+  $('phieu').style.display = 'block';
+  [].forEach.call(document.querySelectorAll('input[name=lo]'), function (r) { r.onchange = function () {
+    $('denbox').style.display = r.value === 'ck' ? 'block' : 'none';
+    $('nvbox').style.display = r.value === 'ck' ? 'none' : 'block';
+    $('nvnhan').textContent = r.value === 'muon' ? 'Người mượn (bắt buộc):' : 'Người trả (không chọn thì bot tự tìm theo serial):';
+    $('gcnhan').textContent = r.value === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : 'Ghi chú (nếu có):';
+    $('gc').placeholder = r.value === 'tra' ? 'vd: xước vỏ, thiếu dây…' : 'Ghi chú…';
+  }; });
+}
 if (THU) $('thu').style.display = 'block';
 try { var n0 = localStorage.getItem('tenTem'); if (n0) $('n').value = n0; } catch (e) {}
 
 // Thông tin đơn tải ngầm – trang đã dùng được ngay, không phải chờ
-if (!D || !T || !EXEC) { $('info').textContent = 'Link không hợp lệ.'; }
-else fetch(EXEC + '?api=teminfo&d=' + encodeURIComponent(D) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
+if ((!D && !KK) || !T || !EXEC) { $('info').textContent = 'Link không hợp lệ.'; }
+else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' + encodeURIComponent(D)) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
   .then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) { $('info').textContent = j.err || 'Lỗi'; return; }
+    if (KK) {
+      $('info').innerHTML = '<b>' + esc(j.kho || '') + '</b>';
+      $('nv').innerHTML = '<option value="">— chọn mã nhân viên —</option>' + (j.dsNv || []).map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
+      $('den').innerHTML = (j.dsKho || []).map(function (x) { return '<label><input type="radio" name="den" value="' + esc(x.k) + '"> ' + esc(x.ten) + '</label>'; }).join('');
+    } else
     $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
     if (j.daCo && j.daCo.n) {
       CO = 1;
@@ -100,7 +128,7 @@ function tai(k, v) { trang[k] = 0; hang.push({ k: k, v: v, lan: 0 }); bom(); }
 function bom() {
   while (dangChay < 3 && hang.length) (function (x) {
     dangChay++;
-    post({ act: 'tai', d: D, t: T, thu: THU, id: B, k: x.k, b: x.v }).then(function (j) {
+    post({ act: 'tai', d: D, kk: KK, t: T, thu: THU, id: B, k: x.k, b: x.v }).then(function (j) {
       if (!j.ok) throw new Error(j.err || 'lỗi');
       trang[x.k] = 1; x.v = null;
     }).catch(function () {
@@ -209,8 +237,16 @@ function kiem() { if (choChot) choChot(); }
 function gui() {
   if (dangGui || (!ds.length && !sr.length)) return;
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
+  var lo = '', den = '', gc = '', nv = '';
+  if (KK) {
+    var r1 = document.querySelector('input[name=lo]:checked');
+    if (!r1) { alert('Chọn loại: Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
+    lo = r1.value; gc = $('gc').value.trim(); nv = lo === 'ck' ? '' : $('nv').value;
+    if (lo === 'muon' && !nv) { alert('Chọn người mượn'); return; }
+    if (lo === 'ck') { var r2 = document.querySelector('input[name=den]:checked'); if (!r2) { alert('Chọn kho chuyển đến'); return; } den = r2.value; }
+  }
   var cd = 'them';
-  if (CO) {
+  if (CO && !KK) {
     var c = document.querySelector('input[name=cd]:checked');
     if (!c) { alert('Chọn Gửi THÊM hay Gửi LẠI'); return; }
     cd = c.value;
@@ -221,7 +257,7 @@ function gui() {
   var t0 = Date.now();
   var chot = function () {
     choChot = null;
-    var o = { act: 'chot', d: D, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiK : '', fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0 };
+    var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiK : '', fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0 };
     // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
     post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
     $('f').style.display = 'none';
