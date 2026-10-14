@@ -144,10 +144,10 @@ function nen(file, cb) {
   r.onload = function () {
     var i = new Image();
     i.onload = function () {
-      var m = 1280, k = Math.min(1, m / Math.max(i.width, i.height));
+      var m = 2000, k = Math.min(1, m / Math.max(i.width, i.height));   // đủ nét để đọc đúng từng số serial
       var c = document.createElement('canvas'); c.width = i.width * k; c.height = i.height * k;
       c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
-      cb(c.toDataURL('image/jpeg', 0.75).split(',')[1]);
+      cb(c.toDataURL('image/jpeg', 0.88).split(',')[1]);
     };
     i.onerror = function () { cb(''); };
     i.src = r.result;
