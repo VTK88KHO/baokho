@@ -30,6 +30,11 @@
  .ls.huy{opacity:.55;text-decoration:line-through}
  .ls button{padding:6px 10px;margin:4px 6px 0 0;border-radius:6px;border:1px solid #1f4e79;background:#fff;color:#1f4e79;font-size:14px}
  .ls button.do{border-color:#c00;color:#c00}
+ .ck{border:2px solid #e65100;border-radius:10px;padding:8px;margin:8px 0;background:#fff8f0}
+ #btnck{background:#e65100;color:#fff;border:none;font-weight:bold;display:none}
+ .sr{display:block;margin:4px 0;padding:6px;border-bottom:1px solid #eee;font-size:15px}
+ .sr input{width:22px;height:22px;vertical-align:middle;margin-right:6px}
+ .sr.on{background:#e8f5e9}
  .nhom{font-weight:bold;color:#1f4e79;margin:14px 0 2px;border-top:1px solid #ddd;padding-top:8px}
 </style>
 </head>
@@ -39,6 +44,8 @@
  <div id="thu" class="note" style="display:none">🧪 TRANG THỬ – kết quả gửi về Telegram riêng của chị, không vào nhóm kho.</div>
  <div id="info" class="s"></div>
  <div id="hoi"></div>
+ <button type="button" class="b" id="btnck"></button>
+ <div id="ckls" style="display:none"></div>
  <div id="phieu" style="display:none">
   <button type="button" class="b" id="btnls">📜 Lịch sử phiếu (xem / hủy phiếu chọn nhầm)</button>
   <div id="ls" style="display:none"></div>
@@ -114,6 +121,7 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
     if (KK) {
       $('info').innerHTML = '<b>' + esc(j.kho || '') + '</b>';
       $('nv').innerHTML = '<option value="">— chọn mã nhân viên —</option>' + (j.dsNv || []).map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
+      if (j.ckCho) { $('btnck').style.display = 'block'; $('btnck').textContent = '📦 Hàng chuyển đến – CHỜ NHẬN (' + j.ckCho + ' phiếu)'; if (Q.get('ck') === '1') taiCk(); }
       $('den').innerHTML = (j.dsKho || []).map(function (x) { return '<label><input type="radio" name="den" value="' + esc(x.k) + '"> ' + esc(x.ten) + '</label>'; }).join('');
     } else
     $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
@@ -140,6 +148,7 @@ function taiLs() {
       $('ls').innerHTML = j.ds.map(function (x) {
         return '<div class="ls' + (x.huy ? ' huy' : '') + '"><b>' + esc(x.so) + '</b> · ' + esc(x.ten) + (x.gc ? ' · ' + esc(x.gc) : '') +
           '<br>' + x.n + ' serial · 👤 ' + esc(x.ng || '') + ' · ' + esc(x.gio) +
+          (x.lo === 'ck' && !x.huy ? (x.nhan ? '<br>' + (x.nhan.thieu ? '⚠️ Kho đến nhận ' + x.nhan.n + '/' + (x.nhan.n + x.nhan.thieu) + ' – THIẾU ' + x.nhan.thieu : '✅ Kho đến đã nhận đủ') + ' (' + esc(x.nhan.ng) + ')' : x.cho ? '<br>⏳ Chờ kho đến kiểm nhận' : '') : '') +
           (x.huy ? '<br>❌ Đã hủy: ' + esc(x.huy.ld) + ' (' + esc(x.huy.ng) + ')' : '') +
           '<div><button type="button" data-ct="' + esc(x.so) + '">Xem serial</button>' +
           (x.huyDuoc ? '<button type="button" class="do" data-huy="' + esc(x.so) + '">❌ Hủy phiếu</button>' : '') + '</div>' +
@@ -168,6 +177,65 @@ function huyPh(so) {
     taiLs();
   }).catch(function () { alert('Mạng lỗi, thử lại.'); });
 }
+// ===== HÀNG CHUYỂN ĐẾN – KIỂM NHẬN (chỉ link kho) =====
+function taiCk() {
+  $('ckls').style.display = 'block'; $('ckls').innerHTML = 'Đang tải…';
+  fetch(EXEC + '?api=ckcho&k=' + encodeURIComponent(KK) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
+    .then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) { $('ckls').textContent = j.err || 'Lỗi'; return; }
+      $('btnck').textContent = '📦 Hàng chuyển đến – CHỜ NHẬN (' + j.ds.length + ' phiếu)';
+      if (!j.ds.length) { $('ckls').innerHTML = '<p class="s">Không còn phiếu nào chờ nhận.</p>'; return; }
+      $('ckls').innerHTML = '<p class="s">Kiểm hàng thực tế, <b>tích từng cái đã có</b>, rồi bấm XÁC NHẬN. Cái nào không tích sẽ báo <b>THIẾU</b>.</p>' + j.ds.map(function (x) {
+        return '<div class="ck"><b>' + esc(x.so) + '</b> · từ <b>' + esc(x.tu) + '</b> · ' + x.n + ' cái' + (x.gc ? ' · ' + esc(x.gc) : '') +
+          '<br>👤 ' + esc(x.ng) + ' · ' + esc(x.gio) + (x.ngay ? ' · ' + x.ngay + ' ngày trước' : '') +
+          '<div><button type="button" class="b" data-kn="' + esc(x.so) + '">🔍 Kiểm nhận phiếu này</button></div><div id="kn_' + esc(x.so) + '"></div></div>';
+      }).join('');
+      [].forEach.call(document.querySelectorAll('[data-kn]'), function (b) { b.onclick = function () { kiemCk(b.getAttribute('data-kn')); }; });
+    }).catch(function () { $('ckls').textContent = 'Không tải được, thử lại.'; });
+}
+function demCk(so) {
+  var o = $('kn_' + so), cs = o.querySelectorAll('input[type=checkbox]'), n = 0;
+  [].forEach.call(cs, function (c) { c.parentNode.classList.toggle('on', c.checked); if (c.checked) n++; });
+  o.querySelector('.dem').textContent = 'Đã tích ' + n + '/' + cs.length + (n < cs.length ? ' · còn ' + (cs.length - n) + ' cái chưa tích' : ' · ĐỦ');
+}
+function kiemCk(so) {
+  var o = $('kn_' + so); o.innerHTML = 'Đang tải…';
+  fetch(EXEC + '?api=ckct&k=' + encodeURIComponent(KK) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : '') + '&so=' + encodeURIComponent(so))
+    .then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) { o.textContent = j.err || 'Lỗi'; return; }
+      o.innerHTML = '<input type="text" class="tim" placeholder="Gõ / quét serial để tích nhanh rồi bấm Enter">' +
+        '<button type="button" class="b tatca">☑ Tích tất cả (nhận đủ)</button>' +
+        j.ds.map(function (x) { return '<label class="sr"><input type="checkbox" value="' + esc(x.sr) + '">' + esc(x.md) + ' · <b>' + esc(x.sr) + '</b></label>'; }).join('') +
+        '<p class="dem" style="font-weight:bold;color:#e65100"></p>' +
+        '<button type="button" class="b xn" style="background:#2e7d32;color:#fff;border:none;font-weight:bold">✅ XÁC NHẬN ĐÃ NHẬN</button>';
+      [].forEach.call(o.querySelectorAll('input[type=checkbox]'), function (c) { c.onchange = function () { demCk(so); }; });
+      o.querySelector('.tatca').onclick = function () { [].forEach.call(o.querySelectorAll('input[type=checkbox]'), function (c) { c.checked = true; }); demCk(so); };
+      var chuan = function (v) { return String(v).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+      o.querySelector('.tim').onkeydown = function (e) {
+        if (e.key !== 'Enter') return; var v = chuan(this.value), thay = 0; this.value = '';
+        [].forEach.call(o.querySelectorAll('input[type=checkbox]'), function (c) { if (v && chuan(c.value) === v) { c.checked = true; thay = 1; } });
+        if (!thay) alert('Serial này KHÔNG có trong phiếu ' + so); demCk(so);
+      };
+      o.querySelector('.xn').onclick = function () { xacNhanCk(so); };
+      demCk(so);
+    }).catch(function () { o.textContent = 'Không tải được.'; });
+}
+function xacNhanCk(so) {
+  var o = $('kn_' + so), ten = $('n').value.trim();
+  if (!ten) { alert('Nhập / bấm TÊN của bạn ở ô "Người gửi" (người nhận hàng) trước.'); $('n').focus(); return; }
+  var co = [], cs = o.querySelectorAll('input[type=checkbox]');
+  [].forEach.call(cs, function (c) { if (c.checked) co.push(c.value); });
+  var thieu = cs.length - co.length;
+  if (!confirm(thieu ? '⚠️ Còn ' + thieu + ' cái CHƯA tích – bot sẽ báo THIẾU ' + thieu + ' cái cho kho đi và quản lý.\nXác nhận nhận ' + co.length + '/' + cs.length + ' cái?' : 'Xác nhận đã nhận ĐỦ ' + cs.length + ' cái của phiếu ' + so + '?')) return;
+  o.querySelector('.xn').disabled = true; o.querySelector('.xn').textContent = 'Đang ghi…';
+  post({ act: 'cknhan', kk: KK, t: T, thu: THU, so: so, n: ten, co: co }).then(function (j) {
+    if (!j.ok) { alert('Chưa xác nhận được: ' + (j.err || 'lỗi')); o.querySelector('.xn').disabled = false; o.querySelector('.xn').textContent = '✅ XÁC NHẬN ĐÃ NHẬN'; return; }
+    try { localStorage.setItem('tenTem', ten); } catch (e) {}
+    alert('✅ Đã xác nhận nhận ' + j.nhan + ' cái' + (j.thieu ? '\n⚠️ Đã báo THIẾU ' + j.thieu + ' cái' : ''));
+    taiCk();
+  }).catch(function () { alert('Mạng lỗi, thử lại.'); o.querySelector('.xn').disabled = false; o.querySelector('.xn').textContent = '✅ XÁC NHẬN ĐÃ NHẬN'; });
+}
+if (KK) $('btnck').onclick = function () { if ($('ckls').style.display === 'block') $('ckls').style.display = 'none'; else taiCk(); };
 if (KK) $('btnls').onclick = function () { if ($('ls').style.display === 'block') $('ls').style.display = 'none'; else taiLs(); };
 
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
