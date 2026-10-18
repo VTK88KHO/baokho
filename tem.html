@@ -26,6 +26,10 @@
  #ok{display:none;text-align:center;font-size:20px;color:#2e7d32;margin-top:40px}
  #ok small{color:#444;font-size:15px}
  label{display:block;margin:8px 0}
+ .ls{border:1px solid #ddd;border-radius:8px;padding:8px;margin:6px 0;font-size:14px}
+ .ls.huy{opacity:.55;text-decoration:line-through}
+ .ls button{padding:6px 10px;margin:4px 6px 0 0;border-radius:6px;border:1px solid #1f4e79;background:#fff;color:#1f4e79;font-size:14px}
+ .ls button.do{border-color:#c00;color:#c00}
  .nhom{font-weight:bold;color:#1f4e79;margin:14px 0 2px;border-top:1px solid #ddd;padding-top:8px}
 </style>
 </head>
@@ -36,6 +40,8 @@
  <div id="info" class="s"></div>
  <div id="hoi"></div>
  <div id="phieu" style="display:none">
+  <button type="button" class="b" id="btnls">📜 Lịch sử phiếu (xem / hủy phiếu chọn nhầm)</button>
+  <div id="ls" style="display:none"></div>
   <p><b>Chọn loại:</b></p>
   <div class="nhom">📥 NHẬP KHO</div>
   <label><input type="radio" name="lo" value="nk_moi"> <b>Nhập mới</b></label>
@@ -123,6 +129,46 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
     if (!$('n').value && ten[0]) $('n').value = ten[0];
     danhDauTen();
   }).catch(function () {});
+
+// ===== LỊCH SỬ PHIẾU + HỦY PHIẾU CHỌN NHẦM (chỉ link kho) =====
+function taiLs() {
+  $('ls').style.display = 'block'; $('ls').innerHTML = 'Đang tải…';
+  fetch(EXEC + '?api=temls&k=' + encodeURIComponent(KK) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
+    .then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) { $('ls').textContent = j.err || 'Lỗi'; return; }
+      if (!j.ds.length) { $('ls').innerHTML = '<p class="s">Chưa có phiếu nào.</p>'; return; }
+      $('ls').innerHTML = j.ds.map(function (x) {
+        return '<div class="ls' + (x.huy ? ' huy' : '') + '"><b>' + esc(x.so) + '</b> · ' + esc(x.ten) + (x.gc ? ' · ' + esc(x.gc) : '') +
+          '<br>' + x.n + ' serial · 👤 ' + esc(x.ng || '') + ' · ' + esc(x.gio) +
+          (x.huy ? '<br>❌ Đã hủy: ' + esc(x.huy.ld) + ' (' + esc(x.huy.ng) + ')' : '') +
+          '<div><button type="button" data-ct="' + esc(x.so) + '">Xem serial</button>' +
+          (x.huyDuoc ? '<button type="button" class="do" data-huy="' + esc(x.so) + '">❌ Hủy phiếu</button>' : '') + '</div>' +
+          '<div id="ct_' + esc(x.so) + '"></div></div>';
+      }).join('');
+      [].forEach.call(document.querySelectorAll('[data-ct]'), function (b) { b.onclick = function () { xemCt(b.getAttribute('data-ct')); }; });
+      [].forEach.call(document.querySelectorAll('[data-huy]'), function (b) { b.onclick = function () { huyPh(b.getAttribute('data-huy')); }; });
+    }).catch(function () { $('ls').textContent = 'Không tải được, thử lại.'; });
+}
+function xemCt(so) {
+  var o = $('ct_' + so); o.textContent = 'Đang tải…';
+  fetch(EXEC + '?api=temct&k=' + encodeURIComponent(KK) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : '') + '&so=' + encodeURIComponent(so))
+    .then(function (r) { return r.json(); }).then(function (j) {
+      o.innerHTML = !j.ok ? esc(j.err || 'Lỗi') : j.ds.map(function (x) { return '• ' + esc(x.md) + ' · <b>' + esc(x.sr) + '</b>' + (/^❌/.test(x.tt) ? ' (đã hủy)' : ''); }).join('<br>') || 'Không có serial.';
+    }).catch(function () { o.textContent = 'Không tải được.'; });
+}
+function huyPh(so) {
+  var ten = $('n').value.trim();
+  if (!ten) { alert('Nhập / bấm TÊN của bạn ở ô "Người gửi" trước khi hủy.'); $('n').focus(); return; }
+  var ld = prompt('Lý do hủy phiếu ' + so + ' (vd: chọn nhầm loại):', 'chọn nhầm loại');
+  if (ld === null) return; ld = ld.trim(); if (!ld) { alert('Phải ghi lý do'); return; }
+  if (!confirm('HỦY phiếu ' + so + '?\nCác serial của phiếu sẽ bị gạch đi (không tính nữa).')) return;
+  post({ act: 'huy', kk: KK, t: T, thu: THU, so: so, n: ten, ld: ld }).then(function (j) {
+    if (!j.ok) { alert('Chưa hủy được: ' + (j.err || 'lỗi')); return; }
+    alert('✅ Đã hủy phiếu ' + so + ' (' + j.n + ' serial)' + (j.tra ? '\n' + j.tra + ' serial quay lại "đang mượn"' : '') + '\nGiờ bạn làm lại phiếu đúng.');
+    taiLs();
+  }).catch(function () { alert('Mạng lỗi, thử lại.'); });
+}
+if (KK) $('btnls').onclick = function () { if ($('ls').style.display === 'block') $('ls').style.display = 'none'; else taiLs(); };
 
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function chonTen(b) { $('n').value = b.textContent; danhDauTen(); }
