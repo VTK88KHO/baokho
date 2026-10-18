@@ -26,6 +26,7 @@
  #ok{display:none;text-align:center;font-size:20px;color:#2e7d32;margin-top:40px}
  #ok small{color:#444;font-size:15px}
  label{display:block;margin:8px 0}
+ .nhom{font-weight:bold;color:#1f4e79;margin:14px 0 2px;border-top:1px solid #ddd;padding-top:8px}
 </style>
 </head>
 <body>
@@ -35,10 +36,20 @@
  <div id="info" class="s"></div>
  <div id="hoi"></div>
  <div id="phieu" style="display:none">
-  <p><b>Loại:</b></p>
-  <label><input type="radio" name="lo" value="muon"> 🤝 <b>Cho mượn</b></label>
-  <label><input type="radio" name="lo" value="tra"> ↩️ <b>Trả hàng mượn</b> (hàng mượn mang về kho)</label>
-  <label><input type="radio" name="lo" value="ck"> 🚚 <b>Chuyển kho</b> sang kho khác</label>
+  <p><b>Chọn loại:</b></p>
+  <div class="nhom">📥 NHẬP KHO</div>
+  <label><input type="radio" name="lo" value="nk_moi"> <b>Nhập mới</b></label>
+  <label><input type="radio" name="lo" value="nk_dp"> <b>Nhập dự phòng</b></label>
+  <label><input type="radio" name="lo" value="nk_khac"> <b>Nhập khác</b> (phải ghi chú)</label>
+  <div class="nhom">📤 XUẤT KHO</div>
+  <label><input type="radio" name="lo" value="xk_dpbh"> <b>Xuất hàng dự phòng bảo hành</b></label>
+  <label><input type="radio" name="lo" value="xk_mbh"> <b>Xuất hàng mới bảo hành</b></label>
+  <label><input type="radio" name="lo" value="xk_lk"> <b>Xuất sang kho linh kiện</b> (phải ghi chú)</label>
+  <div class="nhom">🤝 HÀNG MƯỢN</div>
+  <label><input type="radio" name="lo" value="muon"> <b>Cho mượn</b></label>
+  <label><input type="radio" name="lo" value="tra"> <b>Trả hàng mượn</b> (hàng mượn mang về kho)</label>
+  <div class="nhom">🚚 CHUYỂN KHO</div>
+  <label><input type="radio" name="lo" value="ck"> <b>Chuyển kho</b> sang kho khác</label>
   <div id="denbox" style="display:none"><p><b>Chuyển đến:</b></p><div id="den"></div></div>
   <div id="nvbox" style="display:none"><p><b id="nvnhan">Người mượn:</b></p>
    <select id="nv" style="font-size:17px;padding:10px;width:100%;border:1px solid #aaa;border-radius:8px"><option value="">— chọn mã nhân viên —</option></select>
@@ -67,18 +78,23 @@
 // Link do bot tạo: tem.html?d=<số đơn>&t=<mã>&x=<link /exec của bot>[&thu=1]
 var Q = new URLSearchParams(location.search);
 var D = Q.get('d') || '', T = Q.get('t') || '', THU = Q.get('thu') === '1' ? 1 : 0, EXEC = Q.get('x') || '';
-var KK = Q.get('k') || '';   // link cố định của kho: chụp tem KHÔNG THEO ĐƠN (mượn / trả mượn / chuyển kho)
+var KK = Q.get('k') || '';   // link cố định của kho: chụp tem KHÔNG THEO ĐƠN (nhập / xuất / mượn / trả mượn / chuyển kho)
+var GC_BUOC = { nk_khac: 1, xk_lk: 1 };   // loại phải ghi chú
+var GC_MAU = { nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: nhập dự phòng lô 1222', nk_khac: 'Ghi rõ nhập gì, vì sao…',
+  xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
+  muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
 $('tieu').textContent = KK ? '📷 Chụp tem không theo đơn' : '📷 Ảnh tem · ' + D;
 if (KK) {
   $('phieu').style.display = 'block';
   [].forEach.call(document.querySelectorAll('input[name=lo]'), function (r) { r.onchange = function () {
-    $('denbox').style.display = r.value === 'ck' ? 'block' : 'none';
-    $('nvbox').style.display = r.value === 'ck' ? 'none' : 'block';
-    $('nvnhan').textContent = r.value === 'muon' ? 'Người mượn (bắt buộc):' : 'Người trả (không chọn thì bot tự tìm theo serial):';
-    $('gcnhan').textContent = r.value === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : 'Ghi chú (nếu có):';
-    $('gc').placeholder = r.value === 'tra' ? 'vd: xước vỏ, thiếu dây…' : 'Ghi chú…';
+    var v = r.value;
+    $('denbox').style.display = v === 'ck' ? 'block' : 'none';
+    $('nvbox').style.display = (v === 'muon' || v === 'tra') ? 'block' : 'none';
+    $('nvnhan').textContent = v === 'muon' ? 'Người mượn (bắt buộc):' : 'Người trả (không chọn thì bot tự tìm theo serial):';
+    $('gcnhan').textContent = v === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : GC_BUOC[v] ? 'Ghi chú (BẮT BUỘC):' : 'Ghi chú (nếu có):';
+    $('gc').placeholder = GC_MAU[v] || 'Ghi chú…';
   }; });
 }
 if (THU) $('thu').style.display = 'block';
@@ -240,9 +256,10 @@ function gui() {
   var lo = '', den = '', gc = '', nv = '';
   if (KK) {
     var r1 = document.querySelector('input[name=lo]:checked');
-    if (!r1) { alert('Chọn loại: Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
-    lo = r1.value; gc = $('gc').value.trim(); nv = lo === 'ck' ? '' : $('nv').value;
+    if (!r1) { alert('Chọn loại: Nhập / Xuất / Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
+    lo = r1.value; gc = $('gc').value.trim(); nv = (lo === 'muon' || lo === 'tra') ? $('nv').value : '';
     if (lo === 'muon' && !nv) { alert('Chọn người mượn'); return; }
+    if (GC_BUOC[lo] && !gc) { alert('Loại này phải ghi chú lý do'); $('gc').focus(); return; }
     if (lo === 'ck') { var r2 = document.querySelector('input[name=den]:checked'); if (!r2) { alert('Chọn kho chuyển đến'); return; } den = r2.value; }
   }
   var cd = 'them';
