@@ -338,7 +338,24 @@ function luoi(cb) {
     im.onerror = xong; im.src = 'data:image/jpeg;base64,' + it.b;
   });
 }
-// File Excel/CSV: cột A = serial, cột B = model (dòng trống model thì lấy model dòng trên)
+// File Excel/CSV: bot TỰ NHẬN cột nào là serial (giá trị khác nhau nhiều nhất), cột nào là model (chữ lặp lại); bỏ cột STT
+var TIEU_DE = /serial|^s\/?n$|^stt$|^mã|^model|^tên|^số/i;
+function sach(v) { return String(v == null ? '' : v).split('|').join('').trim(); }
+function doanCot(rows) {
+  var n = 0, tk = [];
+  rows.forEach(function (r) { n = Math.max(n, r.length); });
+  for (var c = 0; c < Math.min(n, 15); c++) {
+    var gt = {}, dem = 0, so = 0, dai = 0;
+    rows.forEach(function (r) { var v = sach(r[c]); if (!v || TIEU_DE.test(v)) return; dem++; gt[v] = 1; if (/^\d{1,5}$/.test(v)) so++; dai += v.length; });
+    var khac = Object.keys(gt).length;
+    tk.push({ c: c, dem: dem, khac: khac, stt: dem && so / dem > 0.8, dai: dem ? dai / dem : 0 });
+  }
+  var hop = tk.filter(function (x) { return x.dem && !x.stt && x.dai >= 4; });
+  if (!hop.length) return { s: -1, m: -1 };
+  hop.sort(function (x, y) { return y.khac - x.khac || x.c - y.c; });
+  var s = hop[0], m = hop.filter(function (x) { return x !== s && x.khac < s.khac; }).sort(function (x, y) { return y.dem - x.dem || x.c - y.c; })[0];
+  return { s: s.c, m: m ? m.c : -1 };
+}
 $('x').onchange = function () {
   var fs = [].slice.call(this.files || []); this.value = '';
   if (typeof XLSX === 'undefined') { alert('Trang chưa tải xong phần đọc Excel, đợi 2 giây rồi chọn lại.'); return; }
@@ -346,17 +363,21 @@ $('x').onchange = function () {
     var r = new FileReader();
     r.onload = function (e) {
       try {
-        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }), ws = wb.Sheets[wb.SheetNames[0]];
-        var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' }), md = '', dem = 0, co = {};
+        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }), dem = 0, co = {};
         sr.forEach(function (x) { co[x.serial] = 1; });
-        rows.forEach(function (r) {
-          var a = String(r[0] || '').split('|').join('').trim(), b = String(r[1] || '').split('|').join('').trim();
-          if (b) md = b;
-          if (!a || a.length < 4 || /serial|^s.n$|^stt$|^mã/i.test(a) || co[a]) return;
-          co[a] = 1; sr.push({ serial: a, model: md }); dem++;
+        wb.SheetNames.forEach(function (tenSh) {
+          var rows = XLSX.utils.sheet_to_json(wb.Sheets[tenSh], { header: 1, raw: false, defval: '' });
+          var cot = doanCot(rows); if (cot.s < 0) return;
+          var md = '';
+          rows.forEach(function (r) {
+            var a = sach(r[cot.s]), b = cot.m >= 0 ? sach(r[cot.m]) : '';
+            if (b && !TIEU_DE.test(b)) md = b;
+            if (!a || a.length < 4 || TIEU_DE.test(a) || co[a]) return;
+            co[a] = 1; sr.push({ serial: a, model: md }); dem++;
+          });
         });
         tenFile.push(f.name + ' (' + dem + ')'); ve(); lamFile();
-        if (!dem) alert('Không thấy serial trong file ' + f.name + ' (serial phải ở cột A).');
+        if (!dem) alert('Không thấy serial trong file ' + f.name + '.');
       } catch (er) { alert('Không đọc được file ' + f.name + ': ' + er.message); }
     };
     r.readAsArrayBuffer(f);
