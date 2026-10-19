@@ -58,6 +58,9 @@
   <label><input type="radio" name="lo" value="xk_dpbh"> <b>Xuất hàng dự phòng bảo hành</b></label>
   <label><input type="radio" name="lo" value="xk_mbh"> <b>Xuất hàng mới bảo hành</b></label>
   <label><input type="radio" name="lo" value="xk_lk"> <b>Xuất sang kho linh kiện</b> (phải ghi chú)</label>
+  <div class="nhom">📦 KÝ GỬI</div>
+  <label><input type="radio" name="lo" value="kg"> <b>Xuất ký gửi</b> (phải ghi tên khách)</label>
+  <label><input type="radio" name="lo" value="kgv"> <b>Nhận lại hàng ký gửi</b> (khách trả về kho)</label>
   <div class="nhom">🤝 HÀNG MƯỢN</div>
   <label><input type="radio" name="lo" value="muon"> <b>Cho mượn</b></label>
   <label><input type="radio" name="lo" value="tra"> <b>Trả hàng mượn</b> (hàng mượn mang về kho)</label>
@@ -70,6 +73,8 @@
   <p><b id="gcnhan">Ghi chú:</b></p>
   <input type="text" id="gc" placeholder="Ghi chú…">
  </div>
+ <div id="gcdonbox" style="display:none"><p><b>Ghi chú</b> (nếu có):</p>
+  <input type="text" id="gcdon" placeholder="vd: thiếu 1 cái gửi sau, hàng xước vỏ, gửi kèm phụ kiện…"></div>
  <p><b>Người gửi:</b> <small>(bấm tên của bạn)</small></p>
  <div id="nut"></div>
  <input type="text" id="n" placeholder="Tên bạn">
@@ -92,9 +97,10 @@
 var Q = new URLSearchParams(location.search);
 var D = Q.get('d') || '', T = Q.get('t') || '', THU = Q.get('thu') === '1' ? 1 : 0, EXEC = Q.get('x') || '';
 var KK = Q.get('k') || '';   // link cố định của kho: chụp tem KHÔNG THEO ĐƠN (nhập / xuất / mượn / trả mượn / chuyển kho)
-var GC_BUOC = { nk_khac: 1, xk_lk: 1 };   // loại phải ghi chú
+var GC_BUOC = { nk_khac: 1, xk_lk: 1, kg: 1 };   // loại phải ghi chú
 var GC_MAU = { nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: nhập dự phòng lô 1222', nk_khac: 'Ghi rõ nhập gì, vì sao…',
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
+  kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -106,10 +112,11 @@ if (KK) {
     $('denbox').style.display = v === 'ck' ? 'block' : 'none';
     $('nvbox').style.display = (v === 'muon' || v === 'tra') ? 'block' : 'none';
     $('nvnhan').textContent = v === 'muon' ? 'Người mượn (bắt buộc):' : 'Người trả (không chọn thì bot tự tìm theo serial):';
-    $('gcnhan').textContent = v === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : GC_BUOC[v] ? 'Ghi chú (BẮT BUỘC):' : 'Ghi chú (nếu có):';
+    $('gcnhan').textContent = v === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : v === 'kg' ? 'Tên khách ký gửi (BẮT BUỘC):' : GC_BUOC[v] ? 'Ghi chú (BẮT BUỘC):' : 'Ghi chú (nếu có):';
     $('gc').placeholder = GC_MAU[v] || 'Ghi chú…';
   }; });
 }
+if (!KK) $('gcdonbox').style.display = 'block';
 if (THU) $('thu').style.display = 'block';
 try { var n0 = localStorage.getItem('tenTem'); if (n0) $('n').value = n0; } catch (e) {}
 
@@ -173,7 +180,7 @@ function huyPh(so) {
   if (!confirm('HỦY phiếu ' + so + '?\nCác serial của phiếu sẽ bị gạch đi (không tính nữa).')) return;
   post({ act: 'huy', kk: KK, t: T, thu: THU, so: so, n: ten, ld: ld }).then(function (j) {
     if (!j.ok) { alert('Chưa hủy được: ' + (j.err || 'lỗi')); return; }
-    alert('✅ Đã hủy phiếu ' + so + ' (' + j.n + ' serial)' + (j.tra ? '\n' + j.tra + ' serial quay lại "đang mượn"' : '') + '\nGiờ bạn làm lại phiếu đúng.');
+    alert('✅ Đã hủy phiếu ' + so + ' (' + j.n + ' serial)' + (j.tra ? '\n' + j.tra + ' serial quay lại như trước khi nhận' : '') + '\nGiờ bạn làm lại phiếu đúng.');
     taiLs();
   }).catch(function () { alert('Mạng lỗi, thử lại.'); });
 }
@@ -388,13 +395,13 @@ function kiem() { if (choChot) choChot(); }
 function gui() {
   if (dangGui || (!ds.length && !sr.length)) return;
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
-  var lo = '', den = '', gc = '', nv = '';
+  var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '';
   if (KK) {
     var r1 = document.querySelector('input[name=lo]:checked');
-    if (!r1) { alert('Chọn loại: Nhập / Xuất / Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
+    if (!r1) { alert('Chọn loại: Nhập / Xuất / Ký gửi / Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
     lo = r1.value; gc = $('gc').value.trim(); nv = (lo === 'muon' || lo === 'tra') ? $('nv').value : '';
     if (lo === 'muon' && !nv) { alert('Chọn người mượn'); return; }
-    if (GC_BUOC[lo] && !gc) { alert('Loại này phải ghi chú lý do'); $('gc').focus(); return; }
+    if (GC_BUOC[lo] && !gc) { alert(lo === 'kg' ? 'Phải ghi TÊN KHÁCH ký gửi' : 'Loại này phải ghi chú lý do'); $('gc').focus(); return; }
     if (lo === 'ck') { var r2 = document.querySelector('input[name=den]:checked'); if (!r2) { alert('Chọn kho chuyển đến'); return; } den = r2.value; }
   }
   var cd = 'them';
