@@ -89,6 +89,7 @@
  <div id="tt"></div>
  <div id="bar"><i></i></div>
 </div>
+<p id="ver" class="s" style="font-size:12px;color:#999;text-align:right"></p>
 <div id="ok">✅ Đã gửi<br><small id="kq"></small><br><br><small>Bạn có thể đóng trang này.</small></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
@@ -102,6 +103,7 @@ var GC_MAU = { nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: 
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
+var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
 $('tieu').textContent = KK ? '📷 Chụp tem không theo đơn' : '📷 Ảnh tem · ' + D;
@@ -125,6 +127,7 @@ if ((!D && !KK) || !T || !EXEC) { $('info').textContent = 'Link không hợp l�
 else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' + encodeURIComponent(D)) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
   .then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) { $('info').textContent = j.err || 'Lỗi'; return; }
+    $('ver').innerHTML = j.ver ? 'bot bản ' + esc(j.ver) : '<b style="color:#c00">⚠️ Bot đang chạy CODE CŨ – báo quản lý cập nhật (Triển khai → Phiên bản mới).</b>';
     if (KK) {
       $('info').innerHTML = '<b>' + esc(j.kho || '') + '</b>';
       $('nv').innerHTML = '<option value="">— chọn mã nhân viên —</option>' + (j.dsNv || []).map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
@@ -323,18 +326,25 @@ function nen(file, cb) {
   r.readAsDataURL(file);
 }
 $('p').onchange = function () {
-  var fs = [].slice.call(this.files || []); this.value = ''; var con = fs.length;
+  var fs = [].slice.call(this.files || []); this.value = '';
+  var cho = TOI_DA - ds.length;
+  if (fs.length > cho) {
+    alert('Mỗi lần gửi tối đa ' + TOI_DA + ' ảnh. Lần này lấy ' + Math.max(cho, 0) + ' ảnh đầu, ' + (fs.length - Math.max(cho, 0)) +
+      ' ảnh còn lại bạn gửi ở lần sau' + (KK ? ' (mở lại link, chọn đúng loại như lần này).' : ' (mở lại link, chọn "Gửi THÊM").'));
+    fs = fs.slice(0, Math.max(cho, 0));
+  }
+  var con = fs.length;
   $('tt').textContent = con ? 'Đang xử lý ảnh…' : '';
   fs.forEach(function (f) {
     nen(f, function (b) {
-      if (b && ds.length < 30) { var k = 'a' + (++soK); ds.push({ b: b, k: k }); tai(k, b); }
+      if (b && ds.length < TOI_DA) { var k = 'a' + (++soK); ds.push({ b: b, k: k }); tai(k, b); }
       if (!--con) { $('tt').textContent = ''; ve(); lamLuoi(); }
     });
   });
 };
 // Ghép nhiều ảnh thành 1 ảnh lưới -> nhóm Zalo chỉ nhận 1 tin
 function luoi(cb) {
-  var n = ds.length, cot = n <= 4 ? 2 : 3, hang2 = Math.ceil(n / cot), o = n <= 4 ? 760 : 560, g = 8;
+  var n = ds.length, cot = n <= 4 ? 2 : n <= 30 ? 3 : 5, hang2 = Math.ceil(n / cot), o = n <= 4 ? 760 : n <= 30 ? 560 : 420, g = 8;
   var c = document.createElement('canvas'); c.width = cot * o + (cot + 1) * g; c.height = hang2 * o + (hang2 + 1) * g;
   var x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); var con = n;
   var xong = function () { if (!--con) cb(c.toDataURL('image/jpeg', 0.8).split(',')[1]); };
