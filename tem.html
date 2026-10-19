@@ -128,6 +128,8 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
     if (KK) {
       $('info').innerHTML = '<b>' + esc(j.kho || '') + '</b>';
       $('nv').innerHTML = '<option value="">— chọn mã nhân viên —</option>' + (j.dsNv || []).map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
+      if (j.dsLoai) [].forEach.call(document.querySelectorAll('input[name=lo]'), function (r) {   // bot bản cũ chưa có loại này -> ẩn, khỏi gửi hỏng
+        if (j.dsLoai.indexOf(r.value) < 0) { r.checked = false; r.parentNode.style.display = 'none'; } });
       if (j.ckCho) { $('btnck').style.display = 'block'; $('btnck').textContent = '📦 Hàng chuyển đến – CHỜ NHẬN (' + j.ckCho + ' phiếu)'; if (Q.get('ck') === '1') taiCk(); }
       $('den').innerHTML = (j.dsKho || []).map(function (x) { return '<label><input type="radio" name="den" value="' + esc(x.k) + '"> ' + esc(x.ten) + '</label>'; }).join('');
     } else
