@@ -25,6 +25,7 @@
  @keyframes chay{from{margin-left:-40%}to{margin-left:100%}}
  #ok{display:none;text-align:center;font-size:20px;color:#2e7d32;margin-top:40px}
  #ok small{color:#444;font-size:15px}
+ #kq{white-space:pre-line}
  label{display:block;margin:8px 0}
  .ls{border:1px solid #ddd;border-radius:8px;padding:8px;margin:6px 0;font-size:14px}
  .ls.huy{opacity:.55;text-decoration:line-through}
@@ -36,6 +37,16 @@
  .sr input{width:22px;height:22px;vertical-align:middle;margin-right:6px}
  .sr.on{background:#e8f5e9}
  .nhom{font-weight:bold;color:#1f4e79;margin:14px 0 2px;border-top:1px solid #ddd;padding-top:8px}
+ #plbox{border:2px solid #6a1b9a;border-radius:10px;padding:8px 10px;margin:12px 0;background:#faf5ff}
+ #plbox h3{margin:2px 0 6px;color:#6a1b9a;font-size:17px}
+ .plm{margin:10px 0 4px;font-weight:bold}
+ .plm small{font-weight:normal;color:#444}
+ .pc{display:inline-block;padding:8px 10px;margin:3px;border:1px solid #6a1b9a;border-radius:10px;background:#fff;color:#6a1b9a;font-size:15px;text-align:left}
+ .pc.on{background:#6a1b9a;color:#fff}
+ .pc input{width:54px;font-size:16px;padding:3px;margin-left:6px;border-radius:6px;border:1px solid #ccc}
+ .plcu{background:#ede7f6;border-radius:8px;padding:6px 8px;margin:6px 0;font-size:14px}
+ .pldu{color:#2e7d32}.plthieu{color:#c00}
+ #plhuy{background:#fff;color:#c00;border:1px solid #c00;font-size:15px;padding:10px}
 </style>
 </head>
 <body>
@@ -75,6 +86,7 @@
  </div>
  <div id="gcdonbox" style="display:none"><p><b>Ghi chú</b> (nếu có):</p>
   <input type="text" id="gcdon" placeholder="vd: thiếu 1 cái gửi sau, hàng xước vỏ, gửi kèm phụ kiện…"></div>
+ <div id="plbox" style="display:none"></div>
  <p><b>Người gửi:</b> <small>(bấm tên của bạn)</small></p>
  <div id="nut"></div>
  <input type="text" id="n" placeholder="Tên bạn">
@@ -137,11 +149,13 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
       $('den').innerHTML = (j.dsKho || []).map(function (x) { return '<label><input type="radio" name="den" value="' + esc(x.k) + '"> ' + esc(x.ten) + '</label>'; }).join('');
     } else
     $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
+    if (!KK) taiPl();
     if (j.daCo && j.daCo.n) {
       CO = 1;
       $('hoi').innerHTML = '<div class="note"><b>Đơn này đã có ' + j.daCo.n + ' serial</b> (gửi lúc ' + esc(j.daCo.gio || '') + '). Lần này:' +
         '<label><input type="radio" name="cd" value="them"> ➕ <b>Gửi THÊM</b> (giữ serial cũ)</label>' +
         '<label><input type="radio" name="cd" value="lai"> 🔄 <b>Gửi LẠI</b> – lần trước gửi nhầm, HỦY serial cũ</label></div>';
+      [].forEach.call(document.querySelectorAll('input[name=cd]'), function (r) { r.onchange = function () { if (PL) vePl(); }; });
     }
     var ten = j.ten || [];
     $('nut').innerHTML = ten.map(function (x) { return '<button type="button" class="tn">' + esc(x) + '</button>'; }).join('');
@@ -250,6 +264,118 @@ function xacNhanCk(so) {
 if (KK) $('btnck').onclick = function () { if ($('ckls').style.display === 'block') $('ckls').style.display = 'none'; else taiCk(); };
 if (KK) $('btnls').onclick = function () { if ($('ls').style.display === 'block') $('ls').style.display = 'none'; else taiLs(); };
 
+// ===== TRỪ PALET (app palet giảm tốc) – chỉ link theo đơn của kho có app palet =====
+var PL = null, PLCHON = {};   // PLCHON[ma] = { 'P12|model|kho': sl }
+function chuanMa(v) { return String(v || '').toUpperCase().replace(/^VC\./, '').replace(/[^A-Z0-9]/g, ''); }
+function cheDo() { var c = document.querySelector('input[name=cd]:checked'); return c ? c.value : 'them'; }
+function taiPl() {
+  fetch(EXEC + '?api=templt&d=' + encodeURIComponent(D) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
+    .then(function (r) { return r.json(); }).then(function (j) {
+      if (!j.ok) { $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">⚠️ Chưa tải được palet: ' + esc(j.err || 'lỗi') + '. Vẫn gửi ảnh bình thường; báo quản lý trừ palet trên app.</p>'; return; }
+      if (j.an) return;
+      PL = j; PLCHON = {};
+      PL.hang.forEach(function (h) { if (h.ds.length === 1) { var x = h.ds[0]; PLCHON[h.ma] = {}; PLCHON[h.ma][x.pl + '|' + x.m + '|' + x.k] = -1; } });   // chỉ 1 palet có model này -> chọn sẵn
+      vePl();
+    }).catch(function () {});
+}
+function daTru(ma) { var n = 0, c = chuanMa(ma); (PL.cu || []).forEach(function (x) { if (chuanMa(x.m) === c) n += Number(x.sl) || 0; }); return n; }
+function canTru(h) { return Math.max(0, (Number(h.sl) || 0) - (cheDo() === 'lai' ? 0 : daTru(h.ma))); }
+// Gửi LẠI: hàng của lần trừ cũ sẽ được trả về palet trước -> cộng lại vào số "còn" (palet đã hết cũng hiện lại)
+function dsHien(x) {
+  var ds = x.ds.map(function (p) { return { pl: p.pl, o: p.o, m: p.m, k: p.k, sl: p.sl, tt: p.tt }; });
+  if (cheDo() !== 'lai') return ds;
+  (PL.cu || []).forEach(function (c) {
+    if (chuanMa(c.m) !== chuanMa(x.ma)) return;
+    var p = ds.filter(function (y) { return y.pl === c.pl && y.m === c.m && y.k === c.k; })[0];
+    if (p) p.sl += Number(c.sl) || 0; else ds.push({ pl: c.pl, o: c.o, m: c.m, k: c.k, sl: Number(c.sl) || 0, tt: '' });
+  });
+  return ds;
+}
+function tongChon(ma) { var n = 0, o = PLCHON[ma] || {}; for (var k in o) n += Math.max(0, o[k]); return n; }
+function vePl() {
+  var lai = cheDo() === 'lai', cu = PL.cu || [];
+  var h = '<h3>📦 Trừ palet <small style="font-weight:normal;color:#444">(app palet giảm tốc)</small></h3>';
+  if (cu.length) {
+    h += '<div class="plcu"><b>Đơn này ĐÃ TRỪ trên app:</b><br>' + cu.map(function (x) { return '• ' + esc(x.pl) + (x.o ? ' (ô ' + esc(x.o) + ')' : '') + ' · ' + esc(x.m) + ': <b>' + x.sl + '</b>'; }).join('<br>') +
+      (lai ? '<br><b style="color:#c00">🔄 Gửi LẠI: lần trừ này sẽ được HỦY, trừ lại theo lựa chọn dưới.</b>' : '') +
+      '<button type="button" class="b" id="plhuy">❌ HỦY TRỪ PALET (trả hàng lại palet)</button></div>';
+  }
+  h += '<p class="s" style="font-size:13px">Bấm palet đã lấy hàng – số lượng tự điền theo đơn, sửa được. Bấm lại để bỏ chọn. Bấm GỬI là app tự trừ.</p>';
+  PL.hang.forEach(function (x, i) {
+    var can = canTru(x), dh = dsHien(x);
+    if (!dh.length && !can) return;
+    h += '<div class="plm">' + esc(x.ma) + ' <small>· đơn ' + x.sl + ' cái' + (!lai && daTru(x.ma) ? ' · đã trừ ' + daTru(x.ma) : '') + '</small> <span id="pls_' + i + '"></span></div>';
+    if (!can) { h += '<div class="s pldu">✅ Đã trừ đủ</div>'; return; }
+    if (!dh.length) { h += '<div class="s plthieu">⚠️ App palet không còn model này</div>'; return; }
+    h += dh.map(function (p) {
+      var key = p.pl + '|' + p.m + '|' + p.k, v = (PLCHON[x.ma] || {})[key], on = v !== undefined;
+      return '<span class="pc' + (on ? ' on' : '') + '" data-i="' + i + '" data-k="' + esc(key) + '"><b>' + esc(p.pl) + '</b> · ô ' + esc(p.o) + ' · còn ' + p.sl +
+        (p.k && p.k !== PL.khoMd ? ' · [' + esc(p.k) + ']' : '') + (p.tt ? ' · ' + esc(p.tt) : '') +
+        (on ? '<input type="number" min="1" max="' + p.sl + '" value="' + (v > 0 ? v : '') + '" data-q="1">' : '') + '</span>';
+    }).join('');
+  });
+  h += '<button type="button" class="b" id="pltru" style="display:none;border-color:#6a1b9a;color:#6a1b9a">📦 CHỈ TRỪ PALET (không gửi ảnh)</button>';
+  $('plbox').innerHTML = h; $('plbox').style.display = 'block';
+  // số lượng tự điền: palet được chọn chưa có số -> lấy phần còn thiếu (tối đa tồn palet)
+  PL.hang.forEach(function (x) {
+    var o = PLCHON[x.ma]; if (!o) return; var con = canTru(x);
+    for (var k in o) if (o[k] > 0) con -= o[k];
+    dsHien(x).forEach(function (p) { var k = p.pl + '|' + p.m + '|' + p.k; if (o[k] === -1) { o[k] = Math.max(0, Math.min(p.sl, con)); con -= o[k]; } });
+  });
+  [].forEach.call(document.querySelectorAll('#plbox .pc'), function (b) {
+    var x = PL.hang[+b.getAttribute('data-i')], key = b.getAttribute('data-k'), q = b.querySelector('input');
+    if (q) { q.value = (PLCHON[x.ma] || {})[key] || ''; q.onclick = function (e) { e.stopPropagation(); };
+      q.oninput = function () { PLCHON[x.ma][key] = Math.max(0, Math.floor(Number(q.value) || 0)); demPl(); }; }
+    b.onclick = function () {
+      var o = PLCHON[x.ma] = PLCHON[x.ma] || {};
+      if (o[key] !== undefined) delete o[key]; else o[key] = -1;
+      vePl();
+    };
+  });
+  if ($('plhuy')) $('plhuy').onclick = huyPl;
+  if ($('pltru')) $('pltru').onclick = truPl;
+  demPl();
+}
+function demPl() {
+  if ($('pltru')) $('pltru').style.display = dsPl().length && !ds.length && !sr.length ? 'block' : 'none';
+  PL.hang.forEach(function (x, i) {
+    var e = $('pls_' + i); if (!e) return; var can = canTru(x), c = tongChon(x.ma);
+    e.innerHTML = !can ? '' : c === can ? '<span class="pldu">✔ chọn đủ ' + c + '</span>' : '<span class="plthieu">chọn ' + c + '/' + can + '</span>';
+  });
+}
+function dsPl() {
+  var out = []; if (!PL) return out;
+  PL.hang.forEach(function (x) { var o = PLCHON[x.ma] || {}; for (var k in o) if (o[k] > 0) { var a = k.split('|'); out.push({ pl: a[0], m: a[1], k: a[2], sl: o[k] }); } });
+  return out;
+}
+/** Chỉ trừ palet, không gửi ảnh (vd sau khi HỦY TRỪ để chọn lại palet đúng) */
+function truPl() {
+  var ten = $('n').value.trim(), dsx = dsPl();
+  if (!ten) { alert('Nhập / bấm TÊN của bạn ở ô "Người gửi" trước.'); $('n').focus(); return; }
+  if (!dsx.length) return;
+  var lai = cheDo() === 'lai' && (PL.cu || []).length;
+  if (!confirm((lai ? 'HỦY lần trừ cũ rồi trừ:\n' : 'Trừ palet:\n') + dsx.map(function (x) { return x.pl + ' · ' + x.m + ': ' + x.sl; }).join('\n') + '\n(không gửi ảnh)?')) return;
+  $('pltru').disabled = true; $('pltru').textContent = 'Đang trừ…';
+  post({ act: 'pltru', d: D, t: T, thu: THU, n: ten, cd: lai ? 'lai' : 'them', plCo: lai ? 1 : 0, pl: dsx, id: B + 'p' + Date.now().toString(36) }).then(function (j) {
+    if (!j.ok) { alert('Chưa trừ được: ' + (j.err || 'lỗi')); $('pltru').disabled = false; $('pltru').textContent = '📦 CHỈ TRỪ PALET (không gửi ảnh)'; return; }
+    try { localStorage.setItem('tenTem', ten); } catch (e) {}
+    alert('✅ Đã trừ palet:\n' + (j.tru || []).join('\n') + (j.thieu && j.thieu.length ? '\n⚠️ Thiếu: ' + j.thieu.join('; ') : ''));
+    var c = document.querySelector('input[name=cd]:checked'); if (c) c.checked = false;
+    taiPl();
+  }).catch(function () { alert('Mạng lỗi, thử lại.'); $('pltru').disabled = false; });
+}
+function huyPl() {
+  var ten = $('n').value.trim();
+  if (!ten) { alert('Nhập / bấm TÊN của bạn ở ô "Người gửi" trước.'); $('n').focus(); return; }
+  if (!confirm('HỦY TRỪ PALET của đơn ' + D + '?\nHàng sẽ được trả lại đúng palet cũ trên app.')) return;
+  $('plhuy').disabled = true; $('plhuy').textContent = 'Đang hủy…';
+  post({ act: 'plhuy', d: D, t: T, thu: THU, n: ten }).then(function (j) {
+    if (!j.ok) { alert('Chưa hủy được: ' + (j.err || 'lỗi')); $('plhuy').disabled = false; $('plhuy').textContent = '❌ HỦY TRỪ PALET (trả hàng lại palet)'; return; }
+    alert('✅ Đã hủy trừ palet (' + j.huy + ' dòng). Chọn lại palet đúng rồi bấm "📦 CHỈ TRỪ PALET" (khỏi gửi lại ảnh).');
+    taiPl();
+  }).catch(function () { alert('Mạng lỗi, thử lại.'); $('plhuy').disabled = false; });
+}
+
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function chonTen(b) { $('n').value = b.textContent; danhDauTen(); }
 function danhDauTen() { var v = $('n').value; [].forEach.call(document.querySelectorAll('.tn'), function (b) { b.classList.toggle('on', b.textContent === v); }); }
@@ -307,6 +433,7 @@ function ve() {
   $('dsf').innerHTML = sr.length ? '📄 ' + esc(tenFile.join(', ')) + ': <b>' + sr.length + ' serial</b> <a href="#" id="bof">✕ bỏ</a>' : '';
   if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; ve(); return false; };
   $('chup').textContent = ds.length ? '📷 Chụp / chọn thêm ảnh' : '📷 Chụp / chọn ảnh tem';
+  if (PL) demPl();
 }
 // Nén ảnh ngay trên điện thoại cho gửi nhanh (vẫn đủ rõ để đọc serial)
 function nen(file, cb) {
@@ -423,16 +550,24 @@ function gui() {
     cd = c.value;
     if (cd === 'lai' && !confirm('Hủy toàn bộ serial cũ của đơn này và thay bằng lần gửi này?')) return;
   }
+  var plDs = dsPl();
+  if (PL && !KK) {
+    var thieuPl = PL.hang.filter(function (x) { return dsHien(x).length && canTru(x) && tongChon(x.ma) < canTru(x); }).map(function (x) { return x.ma + ' (chọn ' + tongChon(x.ma) + '/' + canTru(x) + ')'; });
+    if (thieuPl.length && !confirm('⚠️ Chưa chọn đủ palet cho:\n' + thieuPl.join('\n') + '\n\nVẫn GỬI? (phần chưa chọn quản lý sẽ trừ tay trên app)')) return;
+  }
   try { localStorage.setItem('tenTem', ten); } catch (e) {}
   dangGui = true; $('go').disabled = true; $('chup').disabled = true; $('chonfile').disabled = true;
   var t0 = Date.now();
   var chot = function () {
     choChot = null;
-    var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiK : '', fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0 };
+    var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiK : '', fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0,
+      pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0 };
     // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
     post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
     $('f').style.display = 'none';
-    $('kq').textContent = 'Đã nhận ' + (ds.length ? ds.length + ' ảnh' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm.';
+    $('kq').textContent = 'Đã nhận ' + (ds.length ? ds.length + ' ảnh' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' serial từ file' : '') + '. Bot tự ghi serial và đăng vào nhóm.' +
+      (plDs.length ? '\n📦 App palet tự trừ: ' + plDs.map(function (x) { return x.pl + ' ' + x.m + ' ' + x.sl; }).join(', ') : '') +
+      (!plDs.length && cd === 'lai' && PL && (PL.cu || []).length ? '\n↩️ Lần trừ palet cũ của đơn được hủy.' : '');
     $('ok').style.display = 'block';
   };
   if (ds.length > 1 && !luoiK) { clearTimeout(hgLuoi); var phien = ++gv; luoi(function (b) { if (phien !== gv) return; luoiK = 'g' + phien; tai(luoiK, b); kiem(); }); }
