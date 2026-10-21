@@ -134,6 +134,8 @@ if (!KK) $('gcdonbox').style.display = 'block';
 if (THU) $('thu').style.display = 'block';
 try { var n0 = localStorage.getItem('tenTem'); if (n0) $('n').value = n0; } catch (e) {}
 
+// Phần palet tải CÙNG LÚC với thông tin đơn (không chờ nhau) cho nhanh
+if (D && T && EXEC && !KK) setTimeout(function () { taiPl(); }, 0);
 // Thông tin đơn tải ngầm – trang đã dùng được ngay, không phải chờ
 if ((!D && !KK) || !T || !EXEC) { $('info').textContent = 'Link không hợp lệ.'; }
 else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' + encodeURIComponent(D)) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
@@ -149,7 +151,6 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
       $('den').innerHTML = (j.dsKho || []).map(function (x) { return '<label><input type="radio" name="den" value="' + esc(x.k) + '"> ' + esc(x.ten) + '</label>'; }).join('');
     } else
     $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
-    if (!KK) taiPl();
     if (j.daCo && j.daCo.n) {
       CO = 1;
       $('hoi').innerHTML = '<div class="note"><b>Đơn này đã có ' + j.daCo.n + ' serial</b> (gửi lúc ' + esc(j.daCo.gio || '') + '). Lần này:' +
@@ -271,12 +272,14 @@ function cheDo() { var c = document.querySelector('input[name=cd]:checked'); ret
 function taiPl() {
   fetch(EXEC + '?api=templt&d=' + encodeURIComponent(D) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
     .then(function (r) { return r.json(); }).then(function (j) {
-      if (!j.ok) { $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">⚠️ Chưa tải được palet: ' + esc(j.err || 'lỗi') + '. Vẫn gửi ảnh bình thường; báo quản lý trừ palet trên app.</p>'; return; }
+      if (!j.ok) { $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">⚠️ Chưa tải được palet: ' + esc(j.err || 'lỗi') + '</p><button type="button" class="b" id="plthu">🔄 Tải lại phần palet</button><p class="s" style="font-size:13px">Vẫn gửi ảnh bình thường được.</p>';
+        $('plthu').onclick = function () { $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">Đang tải palet…</p>'; taiPl(); }; return; }
       if (j.an) return;
       PL = j; PLCHON = {};
       PL.hang.forEach(function (h) { if (h.ds.length === 1) { var x = h.ds[0]; PLCHON[h.ma] = {}; PLCHON[h.ma][x.pl + '|' + x.m + '|' + x.k] = -1; } });   // chỉ 1 palet có model này -> chọn sẵn
       vePl();
-    }).catch(function () {});
+    }).catch(function () { $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">⚠️ Mạng chậm, chưa tải được palet.</p><button type="button" class="b" id="plthu">🔄 Tải lại phần palet</button>';
+      $('plthu').onclick = function () { $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">Đang tải palet…</p>'; taiPl(); }; });
 }
 function daTru(ma) { var n = 0, c = chuanMa(ma); (PL.cu || []).forEach(function (x) { if (chuanMa(x.m) === c) n += Number(x.sl) || 0; }); return n; }
 function canTru(h) { return Math.max(0, (Number(h.sl) || 0) - (cheDo() === 'lai' ? 0 : daTru(h.ma))); }
