@@ -103,6 +103,7 @@ var GC_MAU = { nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: 
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
+var TRANG_VER = '23/10/2026b';   // 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -127,7 +128,7 @@ if ((!D && !KK) || !T || !EXEC) { $('info').textContent = 'Link không hợp l�
 else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' + encodeURIComponent(D)) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
   .then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) { $('info').textContent = j.err || 'Lỗi'; return; }
-    $('ver').innerHTML = j.ver ? 'bot bản ' + esc(j.ver) : '<b style="color:#c00">⚠️ Bot đang chạy CODE CŨ – báo quản lý cập nhật (Triển khai → Phiên bản mới).</b>';
+    $('ver').innerHTML = j.ver ? 'trang bản ' + TRANG_VER + ' · bot bản ' + esc(j.ver) : '<b style="color:#c00">⚠️ Bot đang chạy CODE CŨ – báo quản lý cập nhật (Triển khai → Phiên bản mới).</b>';
     if (KK) {
       $('info').innerHTML = '<b>' + esc(j.kho || '') + '</b>';
       $('nv').innerHTML = '<option value="">— chọn mã nhân viên —</option>' + (j.dsNv || []).map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
@@ -344,26 +345,50 @@ $('p').onchange = function () {
 };
 // Ghép nhiều ảnh thành 1 ảnh lưới -> nhóm Zalo chỉ nhận 1 tin
 function luoi(cb) {
-  // Ảnh lưới NÉT TỐI ĐA: ô càng to càng tốt nhưng giữ trong giới hạn điện thoại (iPhone vẽ tối đa ~16 triệu điểm ảnh)
-  // và giới hạn Zalo/Telegram (rộng + cao <= 9800). Ảnh gốc đã nén 2000px nên ô không cần to hơn 2000.
-  var n = ds.length, cot = n <= 4 ? 2 : n <= 30 ? 3 : 5, hang2 = Math.ceil(n / cot), g = 8;
-  var o = Math.min(2000, Math.floor(Math.sqrt(15500000 / (cot * hang2))) - g, Math.floor(9800 / (cot + hang2)) - g);
-  var c = document.createElement('canvas'); c.width = cot * o + (cot + 1) * g; c.height = hang2 * o + (hang2 + 1) * g;
-  var x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height); var con = n;
-  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
-  var xong = function () {
-    if (--con) return;
+  // Ảnh lưới KHÔNG KHOẢNG TRẮNG + NÉT TỐI ĐA: mỗi hàng ảnh tự giãn cho kín bề ngang (ảnh dọc/ngang đều vừa khít,
+  // hàng ít ảnh thì ảnh to hơn). Giữ trong giới hạn điện thoại (~16 triệu điểm ảnh) và Zalo/Telegram (rộng + cao <= 9800).
+  var n = ds.length, ims = [], con = n, g = 6;
+  var veXong = function () {
+    var ok = ims.filter(function (m) { return m && m.width; });
+    if (!ok.length) return cb('');
+    var N = ok.length, cot = N <= 2 ? N : N <= 4 ? 2 : N <= 9 ? 3 : Math.round(Math.sqrt(N * 0.9)), r = Math.ceil(N / cot), hang = [], i0 = 0;
+    for (var h = 0; h < r; h++) { var k = Math.floor(N / r) + (h < N % r ? 1 : 0); hang.push(ok.slice(i0, i0 + k)); i0 += k; }
+    var tinh = function (W) {                                    // chiều cao từng hàng khi rộng W
+      var H = g, maxK = 0;
+      var hs = hang.map(function (row) {
+        var sa = row.reduce(function (t, m) { return t + m.width / m.height; }, 0), rh = (W - (row.length + 1) * g) / sa;
+        row.forEach(function (m) { maxK = Math.max(maxK, rh / m.height); });
+        H += rh + g; return rh;
+      });
+      return { H: H, hs: hs, maxK: maxK };
+    };
+    var lo = 300, hi = 9000;                                     // tìm bề rộng to nhất còn trong giới hạn
+    for (var it = 0; it < 30; it++) {
+      var W = (lo + hi) / 2, t = tinh(W);
+      if (W * t.H <= 15500000 && W + t.H <= 9800 && t.maxK <= 1.05) lo = W; else hi = W;
+    }
+    var W2 = Math.floor(lo), t2 = tinh(W2), c = document.createElement('canvas');
+    c.width = W2; c.height = Math.ceil(t2.H);
+    var x = c.getContext('2d'); x.fillStyle = '#ffffff'; x.fillRect(0, 0, c.width, c.height);
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    var y = g;
+    hang.forEach(function (row, hi2) {
+      var rh = t2.hs[hi2], xx = g;
+      row.forEach(function (m, j) {
+        var w = j === row.length - 1 ? W2 - g - xx : m.width / m.height * rh;   // ảnh cuối hàng lấp nốt mép phải
+        x.drawImage(m, xx, y, w, rh); xx += w + g;
+      });
+      y += rh + g;
+    });
     var q = 0.92, b64 = c.toDataURL('image/jpeg', q).split(',')[1];
     while (b64.length > 9500000 && q > 0.6) { q -= 0.08; b64 = c.toDataURL('image/jpeg', q).split(',')[1]; }   // quá nặng thì giảm nén dần
     cb(b64);
   };
   ds.forEach(function (it, i) {
     var im = new Image();
-    im.onload = function () {
-      var k = Math.min(o / im.width, o / im.height, 1), w = im.width * k, h = im.height * k;
-      x.drawImage(im, g + (i % cot) * (o + g) + (o - w) / 2, g + Math.floor(i / cot) * (o + g) + (o - h) / 2, w, h); xong();
-    };
-    im.onerror = xong; im.src = 'data:image/jpeg;base64,' + it.b;
+    im.onload = function () { ims[i] = im; if (!--con) veXong(); };
+    im.onerror = function () { if (!--con) veXong(); };
+    im.src = 'data:image/jpeg;base64,' + it.b;
   });
 }
 // File Excel/CSV: bot TỰ NHẬN cột nào là serial (giá trị khác nhau nhiều nhất), cột nào là model (chữ lặp lại); bỏ cột STT
