@@ -115,7 +115,7 @@ var GC_MAU = { nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: 
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '24/10/2026 (+ trừ palet)';   // 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '26/10/2026 (8 ảnh/khung)';   // 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -390,6 +390,7 @@ $('go').onclick = gui;
 
 // ===== TẢI TRƯỚC: mỗi ảnh tự gửi lên ngay lúc chụp, nên bấm GỬI là xong luôn =====
 var B = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16);
+var KHUNG = 8, luoiKs = [];   // mỗi khung ảnh lưới tối đa 8 ảnh
 var soK = 0, hang = [], dangChay = 0, gv = 0, luoiK = '', luoiDung = '', hgLuoi = 0, fk = '', fkDung = '';
 var trang = {};   // k -> 0 đang tải, 1 xong, -1 lỗi
 function post(o, keep) {
@@ -409,18 +410,27 @@ function bom() {
   })(hang.shift());
 }
 function chuaXong() {
-  var ks = ds.map(function (x) { return x.k; }); if (ds.length > 1) ks.push(luoiK || '?'); if (sr.length) ks.push(fk || '?');
+  var ks = ds.map(function (x) { return x.k; }); for (var i = 0; i < soKhung(); i++) ks.push(luoiKs[i] || '?'); if (sr.length) ks.push(fk || '?');
   var loi1 = 0, cho = 0;
   ks.forEach(function (k) { var s = trang[k]; if (s === 1) return; if (s === -1) loi1++; else cho++; });
   return { cho: cho, loi: loi1 };
 }
 // Ảnh lưới (nhiều ảnh -> 1 ảnh) dựng lại sau mỗi lần thêm/bớt ảnh, rồi tải trước luôn
+function soKhung() { return ds.length > 1 ? Math.ceil(ds.length / KHUNG) : 0; }
+// Dựng các khung (mỗi khung tối đa 8 ảnh) rồi tải trước từng khung
+function dungKhung(phien, xong) {
+  var n = soKhung();
+  for (var i = 0; i < n; i++) (function (i) {
+    luoi(ds.slice(i * KHUNG, (i + 1) * KHUNG), function (b) {
+      if (phien !== gv) return;
+      var k = 'g' + phien + 'x' + i; luoiKs[i] = k; luoiK = luoiKs[0] || ''; tai(k, b); if (xong) xong();
+    });
+  })(i);
+}
 function lamLuoi() {
-  clearTimeout(hgLuoi); luoiK = ''; var phien = ++gv;
+  clearTimeout(hgLuoi); luoiK = ''; luoiKs = []; var phien = ++gv;
   if (ds.length < 2) return;
-  hgLuoi = setTimeout(function () {
-    luoi(function (b) { if (phien !== gv) return; luoiK = 'g' + phien; tai(luoiK, b); });
-  }, 500);
+  hgLuoi = setTimeout(function () { dungKhung(phien); }, 500);
 }
 function lamFile() {
   fk = ''; if (!sr.length) return;
@@ -474,10 +484,10 @@ $('p').onchange = function () {
   });
 };
 // Ghép nhiều ảnh thành 1 ảnh lưới -> nhóm Zalo chỉ nhận 1 tin
-function luoi(cb) {
+function luoi(list, cb) {
   // Ảnh lưới KHÔNG KHOẢNG TRẮNG + NÉT TỐI ĐA: mỗi hàng ảnh tự giãn cho kín bề ngang (ảnh dọc/ngang đều vừa khít,
   // hàng ít ảnh thì ảnh to hơn). Giữ trong giới hạn điện thoại (~16 triệu điểm ảnh) và Zalo/Telegram (rộng + cao <= 9800).
-  var n = ds.length, ims = [], con = n, g = 6;
+  var n = list.length, ims = [], con = n, g = 6;
   var veXong = function () {
     var ok = ims.filter(function (m) { return m && m.width; });
     if (!ok.length) return cb('');
@@ -514,7 +524,7 @@ function luoi(cb) {
     while (b64.length > 9500000 && q > 0.6) { q -= 0.08; b64 = c.toDataURL('image/jpeg', q).split(',')[1]; }   // quá nặng thì giảm nén dần
     cb(b64);
   };
-  ds.forEach(function (it, i) {
+  list.forEach(function (it, i) {
     var im = new Image();
     im.onload = function () { ims[i] = im; if (!--con) veXong(); };
     im.onerror = function () { if (!--con) veXong(); };
@@ -597,7 +607,7 @@ function gui() {
   var t0 = Date.now();
   var chot = function () {
     choChot = null;
-    var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiK : '', fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0,
+    var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiKs[0] : '', gs: ds.length > 1 ? luoiKs.slice(0, soKhung()) : [], fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0,
       pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0 };
     // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
     post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
@@ -607,7 +617,7 @@ function gui() {
       (!plDs.length && cd === 'lai' && PL && (PL.cu || []).length ? '\n↩️ Lần trừ palet cũ của đơn được hủy.' : '');
     $('ok').style.display = 'block';
   };
-  if (ds.length > 1 && !luoiK) { clearTimeout(hgLuoi); var phien = ++gv; luoi(function (b) { if (phien !== gv) return; luoiK = 'g' + phien; tai(luoiK, b); kiem(); }); }
+  if (ds.length > 1 && luoiKs.filter(Boolean).length < soKhung()) { clearTimeout(hgLuoi); luoiKs = []; var phien = ++gv; dungKhung(phien, kiem); }
   choChot = function () {
     var x = chuaXong();
     if (x.loi) { choChot = null; return loi('mạng yếu, một số ảnh chưa lên được'); }
@@ -620,7 +630,7 @@ function loi(m) {
   alert('Chưa gửi được: ' + m + '\nBấm GỬI để thử lại.');
   // ảnh lỗi -> tải lại từ đầu
   ds.forEach(function (x) { if (trang[x.k] !== 1) tai(x.k, x.b); });
-  if (ds.length > 1 && trang[luoiK] !== 1) { luoiK = ''; lamLuoi(); }
+  if (ds.length > 1 && luoiKs.slice(0, soKhung()).some(function (k) { return trang[k] !== 1; })) lamLuoi();
   if (sr.length && trang[fk] !== 1) lamFile();
   dangGui = false; $('go').disabled = false; $('chup').disabled = false; $('chonfile').disabled = false;
   $('tt').textContent = ''; $('bar').style.display = 'none';
