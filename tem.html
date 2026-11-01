@@ -118,6 +118,7 @@
  <div id="nut"></div>
  <input type="text" id="n" placeholder="Tên bạn">
  <input id="p" type="file" accept="image/*" multiple style="display:none">
+ <input id="ncc" type="file" accept=".xlsx,.xls,.csv" multiple style="display:none">
  <input id="x" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" multiple style="display:none">
  <button class="b" id="chup">📷 Chụp / chọn ảnh tem</button>
  <button class="b" id="chonfile">📄 Chọn file Excel serial</button>
@@ -143,7 +144,7 @@ var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp l
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '01/11/2026c (chọn mã từ danh mục)';   // 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '01/11/2026e (so list nhà cung cấp)';   // 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -669,11 +670,11 @@ function gui() {
   kiem();
 }
 // ===== DANH MỤC (01/11/2026c): tìm + chọn mã hàng (gõ "200a b2" -> các mã có 200A và B2) =====
-var DM = [], DMIX = {}, DMCO = false, dangTaiDM = false;
+var DM = [], DMIX = {}, DMCO = false, dangTaiDM = false, DM_CB = [];
 function dmBo(x) { return String(x || '').toUpperCase().replace(/^[A-Z0-9]{1,4}\./, '').replace(/[^A-Z0-9]/g, ''); }
 function dmCo(x) { var k = String(x || '').toUpperCase().replace(/\s+/g, ''); return DMIX[k] || ''; }
 function taiDM(cb) {
-  if (DM.length) { if (cb) cb(); return; } if (dangTaiDM) return; dangTaiDM = true;
+  if (DM.length) { if (cb) cb(); return; } if (cb) DM_CB.push(cb); if (dangTaiDM) return; dangTaiDM = true;
   fetch(EXEC + '?api=dm&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' + encodeURIComponent(D)) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
     .then(function (r) { return r.json(); }).then(function (j) {
       dangTaiDM = false; if (!j.ok || !j.ds) return;
@@ -682,8 +683,8 @@ function taiDM(cb) {
       DMCO = DM.length > 0;
       ganDM($('ctA'), $('ctAl'), function (c) { $('ctA').value = c; $('ctAk').className = 'dmok'; $('ctAk').textContent = '✓ ' + c; });
       ganDM($('ctB'), $('ctBl'), function (c) { $('ctB').value = c; $('ctBk').className = 'dmok'; $('ctBk').textContent = '✓ ' + c; });
-      if (sr.length) ve(); if (cb) cb();
-    }).catch(function () { dangTaiDM = false; });
+      if (sr.length) ve(); var q = DM_CB; DM_CB = []; q.forEach(function (f) { f(); });
+    }).catch(function () { dangTaiDM = false; var q = DM_CB; DM_CB = []; q.forEach(function (f) { f(); }); });
 }
 function timDM(q) {
   var tk = String(q || '').toUpperCase().split(/\s+/).map(function (t) { return t.replace(/[^A-Z0-9]/g, ''); }).filter(Boolean);
@@ -727,25 +728,106 @@ function nhomNhap() {
   sr.forEach(function (x, i) { var m = x.model || '(chưa rõ model)'; if (!g[m]) { g[m] = []; tt.push(m); } g[m].push(i); });
   return { g: g, tt: tt };
 }
+// ===== 01/11/2026e: LIST NHÀ CUNG CẤP – so số lượng thực nhập với list NCC =====
+var NCC = {}, NCC_TEN = [];                                    // khóa mã -> {ma, md, q}
+function khoaMa(x) { var c = dmCo(x); if (c) return c; var b = dmBo(x), hit = ''; for (var i = 0; i < DM.length; i++) if (dmBo(DM[i].ma) === b) { if (hit && hit !== DM[i].ma) return String(x).toUpperCase().replace(/\s+/g, ''); hit = DM[i].ma; } return hit || String(x).toUpperCase().replace(/\s+/g, ''); }
+function nccSL(maOrModel) { var k = khoaMa(maOrModel); return NCC[k] ? NCC[k].q : 0; }
+function nccTong() { var t = 0; for (var k in NCC) t += NCC[k].q; return t; }
+function soNCC(n) {
+  var co = {}, khop = 0, lech = 0, ngoai = 0, chua = 0;
+  n.tt.forEach(function (m) { var k = khoaMa(sr[n.g[m][0]].ma || m); co[k] = 1; var q = NCC[k] ? NCC[k].q : 0; if (!q) ngoai++; else if (q === n.g[m].length) khop++; else lech++; });
+  var ds = []; for (var k in NCC) if (!co[k]) { chua++; ds.push(NCC[k].ma + ' (' + NCC[k].q + ')'); }
+  return '<div class="s" style="font-size:13.5px;margin:4px 0">So list NCC: ✅ khớp <b>' + khop + '</b> mã · ⚠️ lệch <b>' + lech + '</b> · 🆕 quét được nhưng list không có <b>' + ngoai + '</b> · ❌ list có nhưng chưa quét <b>' + chua + '</b></div>' +
+    (chua ? '<div class="nco" style="font-size:12.5px">❌ Chưa quét: ' + esc(ds.slice(0, 40).join(', ')) + (ds.length > 40 ? ' … (xem file tổng hợp)' : '') + '</div>' : '');
+}
+$('ncc').onchange = function () {
+  var fs = [].slice.call(this.files || []); this.value = '';
+  if (typeof XLSX === 'undefined') { alert('Trang chưa tải xong phần Excel, đợi 2 giây rồi chọn lại.'); return; }
+  var xong = function () { fs.forEach(function (f) {
+    var r = new FileReader();
+    r.onload = function (e) {
+      try {
+        var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }), dem = 0, tong = 0;
+        wb.SheetNames.forEach(function (tenSh) {
+          var rows = XLSX.utils.sheet_to_json(wb.Sheets[tenSh], { header: 1, raw: false, defval: '' }), h = -1, cm = -1, cq = -1;
+          for (var i = 0; i < Math.min(rows.length, 20) && h < 0; i++) {
+            var a = rows[i].map(function (x) { return String(x || '').trim().toLowerCase().replace(/\s+/g, ' '); });
+            var m1 = a.findIndex(function (x) { return /^model|part ?(no|number)|^mã hàng|^item ?(no|code)|^p\/n/.test(x); });
+            var q1 = a.findIndex(function (x) { return /^q'?ty|^quantity|^số lượng|^sl\b|^pcs/.test(x); });
+            if (m1 >= 0 && q1 >= 0) { h = i; cm = m1; cq = q1; }
+          }
+          if (h < 0) return;
+          rows.slice(h + 1).forEach(function (rw) {
+            var md = String(rw[cm] || '').trim(), q = Number(String(rw[cq] || '').replace(/[^\d.]/g, '')) || 0;
+            if (!md || !q || /^total|^tổng/i.test(md)) return;
+            var k = khoaMa(md); if (!NCC[k]) NCC[k] = { ma: k, md: md, q: 0 }; NCC[k].q += q; dem++; tong += q;
+          });
+        });
+        if (!dem) { alert('Không thấy cột Model + Quantity trong file ' + f.name + '. Gửi file này cho quản lý để thêm kiểu cột.'); return; }
+        NCC_TEN.push(f.name + ' (' + tong + ')'); ve();
+      } catch (er) { alert('Không đọc được file ' + f.name + ': ' + er.message); }
+    };
+    r.readAsArrayBuffer(f);
+  }); };
+  if (DM.length) xong(); else taiDM(xong);
+};
+/** 01/11/2026d: tải ngay file Excel tổng hợp từ nháp (chưa cần lưu): tab Tổng hợp (STT, Mã hàng, Tên, Số lượng) + Chi tiết (STT, Mã hàng, Serial). */
+function taiTongHop() {
+  if (typeof XLSX === 'undefined') { alert('Trang chưa tải xong phần Excel, đợi 2 giây rồi bấm lại.'); return; }
+  var n = nhomNhap(), ten = {}; DM.forEach(function (x) { ten[x.ma] = x.ten; });
+  var lo = KK && $('slo') ? $('slo').value.trim() : '', ngay = new Date(), d2 = function (x) { return ('0' + x).slice(-2); };
+  var hom = d2(ngay.getDate()) + '/' + d2(ngay.getMonth() + 1) + '/' + ngay.getFullYear();
+  var coNCC = NCC_TEN.length > 0;
+  var th = [['TỔNG HỢP NHẬP' + (lo ? ' – số lô: ' + lo : '') + ' · ' + hom + ' · ' + n.tt.length + ' mã · ' + sr.length + ' seri' + (coNCC ? ' · list NCC ' + nccTong() + ' cái (' + NCC_TEN.join(', ') + ')' : '')], [],
+    coNCC ? ['STT', 'Mã hàng', 'Tên hàng', 'Model theo list NCC', 'SL thực nhập (quét)', 'SL theo list NCC', 'Chênh lệch (thực − list)', 'Kết luận'] : ['STT', 'Mã hàng', 'Tên hàng', 'Số lượng']];
+  var ct = [['STT', 'Mã hàng', 'Serial']], k = 0, dong = [], co = {};
+  n.tt.forEach(function (m) { var ma = sr[n.g[m][0]].ma || m, kk = khoaMa(ma), q = NCC[kk] ? NCC[kk].q : 0, t = n.g[m].length; co[kk] = 1;
+    dong.push(coNCC ? [ma, ten[ma] || '', NCC[kk] ? NCC[kk].md : '', t, q, t - q, !q ? '🆕 Quét được nhưng list không có' : t === q ? '✅ Khớp' : t > q ? '⚠️ Thừa ' + (t - q) : '⚠️ Thiếu ' + (q - t)] : [ma, ten[ma] || '', t]);
+    n.g[m].forEach(function (i) { ct.push([++k, ma, String(sr[i].serial)]); }); });
+  if (coNCC) { for (var kk in NCC) if (!co[kk]) dong.push([NCC[kk].ma, ten[NCC[kk].ma] || '', NCC[kk].md, 0, NCC[kk].q, -NCC[kk].q, '❌ List có nhưng chưa quét']);
+    dong.sort(function (a, b) { return (a[6].charAt(0) === '✅') - (b[6].charAt(0) === '✅'); }); }   // dòng lệch lên đầu
+  dong.forEach(function (d, i) { th.push([i + 1].concat(d)); });
+  th.push(coNCC ? ['', 'TỔNG', '', '', sr.length, nccTong(), sr.length - nccTong(), ''] : ['', 'TỔNG', '', sr.length]);
+  var wb = XLSX.utils.book_new(), w1 = XLSX.utils.aoa_to_sheet(th), w2 = XLSX.utils.aoa_to_sheet(ct);
+  w1['!cols'] = coNCC ? [{ wch: 6 }, { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }] : [{ wch: 6 }, { wch: 28 }, { wch: 45 }, { wch: 10 }]; w2['!cols'] = [{ wch: 7 }, { wch: 28 }, { wch: 26 }];
+  for (var r = 1; r < ct.length; r++) { var c = w2[XLSX.utils.encode_cell({ r: r, c: 2 })]; if (c) { c.t = 's'; c.z = '@'; } }   // seri giữ dạng chữ (không mất số 0, không thành 2E+19)
+  XLSX.utils.book_append_sheet(wb, w1, 'Tổng hợp'); XLSX.utils.book_append_sheet(wb, w2, 'Chi tiết');
+  var tenF = 'Tong hop nhap' + (lo ? ' - ' + lo.replace(/[\\/:*?"<>|]/g, '-') : '') + ' - ' + hom.replace(/\//g, '-') + '.xlsx';
+  var blob = new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = tenF; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
 function veNhap() {
   var o = $('nhap'); if (!o) return;
   if (!sr.length) { o.style.display = 'none'; o.innerHTML = ''; return; }
   var n = nhomNhap(), soCo = 0;
   sr.forEach(function (x) { if (CO_FILE[x.serial]) soCo++; });
+  var LA = {}, soLa = 0;                                  // seri dài/ngắn khác hẳn các seri cùng model (vd quét nhầm mã khác)
+  n.tt.forEach(function (m) { var dem = {}, ids = n.g[m], best = 0, len = 0;
+    ids.forEach(function (i) { var l = String(sr[i].serial).length; dem[l] = (dem[l] || 0) + 1; if (dem[l] > best) { best = dem[l]; len = l; } });
+    if (ids.length >= 3) ids.forEach(function (i) { if (Math.abs(String(sr[i].serial).length - len) >= 3) { LA[i] = 1; soLa++; } }); });
   var h = '<h3>📋 NHÁP – ' + n.tt.length + ' model · ' + sr.length + ' seri</h3>' +
+    (laNk() ? '<button type="button" class="b" id="chonNCC" style="font-size:15px;padding:10px">📄 ' + (NCC_TEN.length ? 'Thêm / đổi' : 'Chọn') + ' LIST NHÀ CUNG CẤP (so số lượng)</button>' +
+      (NCC_TEN.length ? '<div class="s" style="font-size:13px">📄 ' + esc(NCC_TEN.join(', ')) + ': <b>' + nccTong() + ' cái</b> · ' + Object.keys(NCC).length + ' mã <a href="#" id="boNCC">✕ bỏ list</a></div>' + soNCC(n) : '') : '') +
+    '<button type="button" class="b" id="taiTH" style="background:#2e7d32;color:#fff;border:none;font-size:16px;padding:11px">📥 TẢI FILE TỔNG HỢP (Excel)</button>' +
+    (soLa ? '<p class="nco">⚠️ ' + soLa + ' seri dài/ngắn khác hẳn các seri cùng model (đánh dấu "seri lạ") – có thể quét nhầm mã khác, bấm 👁 kiểm tra.</p>' : '') +
     '<p class="s" style="font-size:13px">Kiểm tra trước khi lưu: sửa tên model sai rồi bấm ra ngoài · 👁 xem seri · ✕ bỏ. Chưa bấm LƯU thì chưa ghi gì vào file kho.</p>' +
     (soCo ? '<p class="nco">⚠️ ' + soCo + ' seri ĐÃ CÓ trong file kho (ghi chú cam bên dưới) – kiểm tra có quét trùng không.</p>' : '');
   n.tt.forEach(function (m, gi) {
-    var ids = n.g[m], coG = ids.filter(function (i) { return CO_FILE[sr[i].serial]; }).length, ma = sr[ids[0]].ma;
+    var ids = n.g[m], coG = ids.filter(function (i) { return CO_FILE[sr[i].serial]; }).length, ma = sr[ids[0]].ma, laG = ids.filter(function (i) { return LA[i]; }).length;
     h += '<div class="nm"><div class="dmw"><input data-g="' + gi + '" value="' + esc(m) + '" autocomplete="off"><div class="dml" id="nml' + gi + '"></div></div> <span class="sl">' + ids.length + '</span>' +
       '<button type="button" data-xem="' + gi + '">👁</button><button type="button" class="do" data-bo="' + gi + '">✕</button>' +
       (DMCO ? (ma ? '<div class="dmok">✓ mã danh mục: ' + esc(ma) + '</div>' : '<div class="dmno">🆕 KHÔNG có trong danh mục – gõ vào ô trên rồi bấm chọn mã đúng (không chọn thì lưu vẫn được nhưng CHƯA cộng tồn, bot báo sếp)</div>') : '') +
-      (coG ? '<div class="nco">⚠️ ' + coG + ' seri đã có trong file kho</div>' : '') +
+      (coG ? '<div class="nco">⚠️ ' + coG + ' seri đã có trong file kho</div>' : '') + (laG ? '<div class="nco">⚠️ ' + laG + ' seri lạ</div>' : '') +
+      (NCC_TEN.length ? (function () { var q = nccSL(ma || m), d = ids.length - q; return '<div class="' + (d ? 'dmno' : 'dmok') + '">List NCC: ' + q + (d ? ' → ' + (d > 0 ? 'THỪA ' + d : 'THIẾU ' + (-d)) : ' ✓ khớp') + '</div>'; })() : '') +
       '<div class="nsr" id="nsr' + gi + '" style="display:' + (MO[m] ? 'block' : 'none') + '">' + ids.map(function (i) {
-        return '<div>' + esc(sr[i].serial) + (CO_FILE[sr[i].serial] ? ' <span class="nco">(đã có · ' + esc(CO_FILE[sr[i].serial]) + ')</span>' : '') + '<span data-xs="' + i + '">✕</span></div>';
+        return '<div>' + esc(sr[i].serial) + (LA[i] ? ' <span class="nco">(seri lạ)</span>' : '') + (CO_FILE[sr[i].serial] ? ' <span class="nco">(đã có · ' + esc(CO_FILE[sr[i].serial]) + ')</span>' : '') + '<span data-xs="' + i + '">✕</span></div>';
       }).join('') + '</div></div>';
   });
   o.innerHTML = h; o.style.display = 'block';
+  $('taiTH').onclick = taiTongHop;
+  if ($('chonNCC')) $('chonNCC').onclick = function () { taiDM(); $('ncc').click(); };
+  if ($('boNCC')) $('boNCC').onclick = function () { NCC = {}; NCC_TEN = []; ve(); return false; };
   [].forEach.call(o.querySelectorAll('input[data-g]'), function (inp) {
     var gi = +inp.getAttribute('data-g');
     if (DM.length) ganDM(inp, $('nml' + gi), function (code) { inp.value = code; inp.onchange(); });
