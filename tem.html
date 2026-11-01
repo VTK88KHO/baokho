@@ -144,7 +144,7 @@ var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp l
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '01/11/2026e (so list nhà cung cấp)';   // 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '01/11/2026g (hàng không theo dõi seri)';   // 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -478,7 +478,7 @@ function ve() {
   $('go').style.display = (ds.length || sr.length) ? 'block' : 'none';
   $('go').textContent = (laNk() ? '💾 LƯU VÀO FILE KHO · ' : '✅ GỬI ') + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
   $('dsf').innerHTML = sr.length ? '📄 ' + esc(tenFile.join(', ')) + ': <b>' + sr.length + ' serial</b> <a href="#" id="bof">✕ bỏ</a>' : '';
-  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; SUA = []; ve(); return false; };
+  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; SUA = []; DUPF = {}; ve(); return false; };
   veNhap();
   $('chup').textContent = ds.length ? '📷 Chụp / chọn thêm ảnh' : '📷 Chụp / chọn ảnh tem';
   if (PL) demPl();
@@ -599,8 +599,9 @@ $('x').onchange = function () {
           rows.forEach(function (r) {
             var a = sach(r[cot.s]), b = cot.m >= 0 ? sach(r[cot.m]) : '';
             if (b && !TIEU_DE.test(b)) md = b;
-            if (!a || a.length < 4 || TIEU_DE.test(a) || co[a]) return;
-            co[a] = 1; sr.push({ serial: a, model: md }); dem++;
+            if (!a || a.length < 4 || TIEU_DE.test(a)) return;
+            if (co[a]) { (DUPF[a] = DUPF[a] || []).push(f.name); return; }   // quét trùng: nhớ file trùng để truy
+            co[a] = 1; sr.push({ serial: a, model: md, f: f.name }); dem++;
           });
         });
         tenFile.push(f.name + ' (' + dem + ')'); ve(); lamFile(); hoiNhap();
@@ -615,7 +616,7 @@ function kiem() { if (choChot) choChot(); }
 function gui() {
   if (dangGui || (!ds.length && !sr.length)) return;
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
-  var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '', slo = '', ctA = '', ctB = '', ctN = 0;
+  var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '', slo = '', ctA = '', ctB = '', ctN = 0, ksr = [];
   if (KK) {
     var r1 = document.querySelector('input[name=lo]:checked');
     if (!r1) { alert('Chọn loại: Nhập / Xuất / Ký gửi / Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
@@ -630,7 +631,10 @@ function gui() {
       if (ctN < 1) { alert('Nhập SỐ LƯỢNG cải tiến'); $('ctN').focus(); return; }
       if (!confirm('CẢI TIẾN ' + ctN + ' cái: ' + ctA + ' → ' + ctB + '?\nApp kiểm kho sẽ trừ ' + ctA + ' và cộng ' + ctB + '.')) return; }
     if (lo === 'nk_lo') { slo = $('slo').value.trim(); if (!slo) { alert('Nhập SỐ LÔ nhập khẩu'); $('slo').focus(); return; }
-      if (!confirm('LƯU lô ' + slo + ': ' + sr.length + ' seri từ file' + (ds.length ? ' + ' + ds.length + ' ảnh' : '') + ' vào file kho?')) return; }
+      var chuaChon = CHUA.filter(function (k) { return NCC[k] && !(KS[k] && KS[k].ks); }).length;
+      if (chuaChon && !confirm('Còn ' + chuaChon + ' mã trong list NCC chưa quét seri và chưa chọn "Không seri" – những mã này sẽ KHÔNG được nhập. Vẫn lưu?')) return;
+      ksr = laNk() ? ksDs() : [];
+      if (!confirm('LƯU lô ' + slo + ': ' + sr.length + ' seri từ file' + (ksr.length ? ' + ' + ksTong() + ' cái không theo dõi seri (' + ksr.length + ' mã)' : '') + (ds.length ? ' + ' + ds.length + ' ảnh' : '') + ' vào file kho?')) return; }
   }
   var cd = 'them';
   if (CO && !KK) {
@@ -651,7 +655,7 @@ function gui() {
   var chot = function () {
     choChot = null;
     var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiKs[0] : '', gs: ds.length > 1 ? luoiKs.slice(0, soKhung()) : [], fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0,
-      pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0, slo: slo, sua: SUA, ctA: ctA, ctB: ctB, ctN: ctN };
+      pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0, slo: slo, sua: SUA, ctA: ctA, ctB: ctB, ctN: ctN, ksr: ksr, ksBo: Object.keys(KS).filter(function (k) { return KS[k].ks === false && KSNHO[String(k).toUpperCase()]; }) };
     // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
     post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
     $('f').style.display = 'none';
@@ -670,7 +674,7 @@ function gui() {
   kiem();
 }
 // ===== DANH MỤC (01/11/2026c): tìm + chọn mã hàng (gõ "200a b2" -> các mã có 200A và B2) =====
-var DM = [], DMIX = {}, DMCO = false, dangTaiDM = false, DM_CB = [];
+var DM = [], DMIX = {}, DMCO = false, dangTaiDM = false, DM_CB = [], KSNHO = {};
 function dmBo(x) { return String(x || '').toUpperCase().replace(/^[A-Z0-9]{1,4}\./, '').replace(/[^A-Z0-9]/g, ''); }
 function dmCo(x) { var k = String(x || '').toUpperCase().replace(/\s+/g, ''); return DMIX[k] || ''; }
 function taiDM(cb) {
@@ -680,7 +684,7 @@ function taiDM(cb) {
       dangTaiDM = false; if (!j.ok || !j.ds) return;
       DM = j.ds.map(function (r) { return { ma: r[0], ten: r[1], s: dmBo(r[0]) + ' ' + String(r[1] || '').toUpperCase() }; });
       DM.forEach(function (x) { DMIX[x.ma.toUpperCase().replace(/\s+/g, '')] = x.ma; });
-      DMCO = DM.length > 0;
+      DMCO = DM.length > 0; (j.ks || []).forEach(function (x) { KSNHO[String(x).toUpperCase()] = 1; });
       ganDM($('ctA'), $('ctAl'), function (c) { $('ctA').value = c; $('ctAk').className = 'dmok'; $('ctAk').textContent = '✓ ' + c; });
       ganDM($('ctB'), $('ctBl'), function (c) { $('ctB').value = c; $('ctBk').className = 'dmok'; $('ctBk').textContent = '✓ ' + c; });
       if (sr.length) ve(); var q = DM_CB; DM_CB = []; q.forEach(function (f) { f(); });
@@ -733,12 +737,41 @@ var NCC = {}, NCC_TEN = [];                                    // khóa mã -> {
 function khoaMa(x) { var c = dmCo(x); if (c) return c; var b = dmBo(x), hit = ''; for (var i = 0; i < DM.length; i++) if (dmBo(DM[i].ma) === b) { if (hit && hit !== DM[i].ma) return String(x).toUpperCase().replace(/\s+/g, ''); hit = DM[i].ma; } return hit || String(x).toUpperCase().replace(/\s+/g, ''); }
 function nccSL(maOrModel) { var k = khoaMa(maOrModel); return NCC[k] ? NCC[k].q : 0; }
 function nccTong() { var t = 0; for (var k in NCC) t += NCC[k].q; return t; }
+var KS = {}, CHUA = [];                                      // KS[mã] = {ks: true (không theo dõi seri) | false (có seri, quét bổ sung), q}
+function ksQ(k) { return KS[k] && KS[k].ks ? (Number(KS[k].q) || 0) : 0; }
+function ksTong() { var t = 0; for (var k in KS) if (NCC[k]) t += ksQ(k); return t; }
+function ksDs() { var o = []; for (var k in KS) if (NCC[k] && ksQ(k) > 0) o.push({ m: NCC[k].ma, q: ksQ(k) }); return o; }
 function soNCC(n) {
-  var co = {}, khop = 0, lech = 0, ngoai = 0, chua = 0;
+  var co = {}, khop = 0, lech = 0, ngoai = 0, chua = 0, ksK = 0, ksL = 0;
   n.tt.forEach(function (m) { var k = khoaMa(sr[n.g[m][0]].ma || m); co[k] = 1; var q = NCC[k] ? NCC[k].q : 0; if (!q) ngoai++; else if (q === n.g[m].length) khop++; else lech++; });
-  var ds = []; for (var k in NCC) if (!co[k]) { chua++; ds.push(NCC[k].ma + ' (' + NCC[k].q + ')'); }
-  return '<div class="s" style="font-size:13.5px;margin:4px 0">So list NCC: ✅ khớp <b>' + khop + '</b> mã · ⚠️ lệch <b>' + lech + '</b> · 🆕 quét được nhưng list không có <b>' + ngoai + '</b> · ❌ list có nhưng chưa quét <b>' + chua + '</b></div>' +
-    (chua ? '<div class="nco" style="font-size:12.5px">❌ Chưa quét: ' + esc(ds.slice(0, 40).join(', ')) + (ds.length > 40 ? ' … (xem file tổng hợp)' : '') + '</div>' : '');
+  CHUA = []; for (var k in NCC) if (!co[k]) {
+    if (!KS[k] && KSNHO[String(k).toUpperCase()]) KS[k] = { ks: true, q: NCC[k].q };   // lần trước đã chọn "không theo dõi seri"
+    CHUA.push(k); if (KS[k] && KS[k].ks) { if (ksQ(k) === NCC[k].q) ksK++; else ksL++; } else chua++;
+  }
+  var h = '<div class="s" style="font-size:13.5px;margin:4px 0">So list NCC: ✅ khớp <b>' + (khop + ksK) + '</b> mã · ⚠️ lệch <b>' + (lech + ksL) + '</b> · 🆕 quét được nhưng list không có <b>' + ngoai + '</b> · ❌ list có nhưng chưa quét <b>' + chua + '</b>' +
+    (ksK + ksL ? ' · 📦 không theo dõi seri <b>' + (ksK + ksL) + '</b> mã (' + ksTong() + ' cái)' : '') + '</div>';
+  if (CHUA.length) {
+    h += '<div class="panel" style="margin:6px 0;padding:8px;border:2px solid #e65100;border-radius:10px;background:#fff8f0">' +
+      '<div style="font-weight:bold;color:#e65100">Mã có trong list NCC nhưng KHÔNG có seri quét (' + CHUA.length + ' mã) – kho có theo dõi seri không?</div>' +
+      '<div class="s" style="font-size:12.5px">Hàng không theo dõi seri (dây cáp, phụ kiện…): chọn <b>Không seri</b>, số lượng điền sẵn theo list – mã nào thực nhận khác thì sửa riêng mã đó. Có seri thì quét bổ sung rồi chọn thêm file.</div>' +
+      '<button type="button" class="b" id="ksAll" style="font-size:15px;padding:10px;border-color:#e65100;color:#e65100">📦 Tất cả mã dưới đây KHÔNG theo dõi seri – nhận đúng theo list</button>';
+    CHUA.forEach(function (k, i) { var x = KS[k] || {}, q = NCC[k].q, d = ksQ(k) - q;
+      h += '<div class="nm" style="padding:6px 0"><b>' + esc(NCC[k].ma) + '</b> <span class="s" style="font-size:12.5px">· list ' + q + '</span><br>' +
+        '<button type="button" data-ksy="' + i + '" style="' + (x.ks === false ? 'background:#1f4e79;color:#fff' : '') + '">Có seri (quét bổ sung)</button>' +
+        '<button type="button" data-ksn="' + i + '" style="' + (x.ks ? 'background:#e65100;color:#fff;border-color:#e65100' : 'border-color:#e65100;color:#e65100') + '">Không seri</button>' +
+        (x.ks ? ' SL thực nhận: <input data-ksq="' + i + '" inputmode="numeric" value="' + ksQ(k) + '" style="width:70px;font-size:16px;padding:5px;border:1px solid #aaa;border-radius:6px"> ' +
+          (d ? '<span class="nco">' + (d > 0 ? 'THỪA ' + d : 'THIẾU ' + (-d)) + ' so với list</span>' : '<span class="dmok">✓ khớp list</span>') :
+          x.ks === false ? ' <span class="nco">chưa quét – cần quét bổ sung</span>' : ' <span class="nco">❌ chưa chọn</span>') + '</div>';
+    });
+    h += '</div>';
+  }
+  return h;
+}
+function ganKS() {
+  if ($('ksAll')) $('ksAll').onclick = function () { CHUA.forEach(function (k) { KS[k] = { ks: true, q: KS[k] && KS[k].ks ? KS[k].q : NCC[k].q }; }); ve(); };
+  [].forEach.call(document.querySelectorAll('[data-ksy]'), function (b) { b.onclick = function () { KS[CHUA[+b.getAttribute('data-ksy')]] = { ks: false }; ve(); }; });
+  [].forEach.call(document.querySelectorAll('[data-ksn]'), function (b) { b.onclick = function () { var k = CHUA[+b.getAttribute('data-ksn')]; KS[k] = { ks: true, q: NCC[k].q }; ve(); }; });
+  [].forEach.call(document.querySelectorAll('[data-ksq]'), function (inp) { inp.onchange = function () { var k = CHUA[+inp.getAttribute('data-ksq')]; KS[k] = { ks: true, q: Math.max(0, Math.floor(Number(inp.value) || 0)) }; ve(); }; });
 }
 $('ncc').onchange = function () {
   var fs = [].slice.call(this.files || []); this.value = '';
@@ -780,16 +813,23 @@ function taiTongHop() {
   var coNCC = NCC_TEN.length > 0;
   var th = [['TỔNG HỢP NHẬP' + (lo ? ' – số lô: ' + lo : '') + ' · ' + hom + ' · ' + n.tt.length + ' mã · ' + sr.length + ' seri' + (coNCC ? ' · list NCC ' + nccTong() + ' cái (' + NCC_TEN.join(', ') + ')' : '')], [],
     coNCC ? ['STT', 'Mã hàng', 'Tên hàng', 'Model theo list NCC', 'SL thực nhập (quét)', 'SL theo list NCC', 'Chênh lệch (thực − list)', 'Kết luận'] : ['STT', 'Mã hàng', 'Tên hàng', 'Số lượng']];
-  var ct = [['STT', 'Mã hàng', 'Serial']], k = 0, dong = [], co = {};
+  var ct = [['STT', 'Mã hàng', 'Serial', 'File nguồn (file quét tải lên)', 'Ghi chú']], k = 0, dong = [], co = {}, LA = tinhLa(n);
   n.tt.forEach(function (m) { var ma = sr[n.g[m][0]].ma || m, kk = khoaMa(ma), q = NCC[kk] ? NCC[kk].q : 0, t = n.g[m].length; co[kk] = 1;
     dong.push(coNCC ? [ma, ten[ma] || '', NCC[kk] ? NCC[kk].md : '', t, q, t - q, !q ? '🆕 Quét được nhưng list không có' : t === q ? '✅ Khớp' : t > q ? '⚠️ Thừa ' + (t - q) : '⚠️ Thiếu ' + (q - t)] : [ma, ten[ma] || '', t]);
-    n.g[m].forEach(function (i) { ct.push([++k, ma, String(sr[i].serial)]); }); });
-  if (coNCC) { for (var kk in NCC) if (!co[kk]) dong.push([NCC[kk].ma, ten[NCC[kk].ma] || '', NCC[kk].md, 0, NCC[kk].q, -NCC[kk].q, '❌ List có nhưng chưa quét']);
+    n.g[m].forEach(function (i) { var x = sr[i], gc = [];
+      if (LA[i]) gc.push('⚠️ seri lạ (dài/ngắn khác các seri cùng mã)');
+      if (DUPF[x.serial]) gc.push('⚠️ quét trùng ở file: ' + DUPF[x.serial].join(', '));
+      if (CO_FILE[x.serial]) gc.push('⚠️ đã có trong file kho (' + CO_FILE[x.serial] + ')');
+      ct.push([++k, ma, String(x.serial), x.f || '', gc.join(' · ')]); }); });
+  if (coNCC) { for (var kk in NCC) if (!co[kk]) { var kq2 = ksQ(kk), lq = NCC[kk].q;
+      if (KS[kk] && KS[kk].ks) { dong.push([NCC[kk].ma, ten[NCC[kk].ma] || '', NCC[kk].md, kq2, lq, kq2 - lq, kq2 === lq ? '✅ Khớp (📦 không theo dõi seri, nhập tay)' : '⚠️ ' + (kq2 > lq ? 'Thừa ' + (kq2 - lq) : 'Thiếu ' + (lq - kq2)) + ' (📦 không theo dõi seri, nhập tay)']);
+        ct.push([++k, NCC[kk].ma, '(không theo dõi seri)', 'nhập tay trên nháp', 'Số lượng: ' + kq2]); }
+      else dong.push([NCC[kk].ma, ten[NCC[kk].ma] || '', NCC[kk].md, 0, lq, -lq, KS[kk] && KS[kk].ks === false ? '❌ Có seri nhưng chưa quét' : '❌ List có nhưng chưa quét']); }
     dong.sort(function (a, b) { return (a[6].charAt(0) === '✅') - (b[6].charAt(0) === '✅'); }); }   // dòng lệch lên đầu
   dong.forEach(function (d, i) { th.push([i + 1].concat(d)); });
-  th.push(coNCC ? ['', 'TỔNG', '', '', sr.length, nccTong(), sr.length - nccTong(), ''] : ['', 'TỔNG', '', sr.length]);
+  th.push(coNCC ? ['', 'TỔNG', '', '', sr.length + ksTong(), nccTong(), sr.length + ksTong() - nccTong(), ''] : ['', 'TỔNG', '', sr.length]);
   var wb = XLSX.utils.book_new(), w1 = XLSX.utils.aoa_to_sheet(th), w2 = XLSX.utils.aoa_to_sheet(ct);
-  w1['!cols'] = coNCC ? [{ wch: 6 }, { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }] : [{ wch: 6 }, { wch: 28 }, { wch: 45 }, { wch: 10 }]; w2['!cols'] = [{ wch: 7 }, { wch: 28 }, { wch: 26 }];
+  w1['!cols'] = coNCC ? [{ wch: 6 }, { wch: 28 }, { wch: 40 }, { wch: 26 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 }] : [{ wch: 6 }, { wch: 28 }, { wch: 45 }, { wch: 10 }]; w2['!cols'] = [{ wch: 7 }, { wch: 28 }, { wch: 26 }, { wch: 40 }, { wch: 50 }];
   for (var r = 1; r < ct.length; r++) { var c = w2[XLSX.utils.encode_cell({ r: r, c: 2 })]; if (c) { c.t = 's'; c.z = '@'; } }   // seri giữ dạng chữ (không mất số 0, không thành 2E+19)
   XLSX.utils.book_append_sheet(wb, w1, 'Tổng hợp'); XLSX.utils.book_append_sheet(wb, w2, 'Chi tiết');
   var tenF = 'Tong hop nhap' + (lo ? ' - ' + lo.replace(/[\\/:*?"<>|]/g, '-') : '') + ' - ' + hom.replace(/\//g, '-') + '.xlsx';
@@ -797,19 +837,26 @@ function taiTongHop() {
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = tenF; document.body.appendChild(a); a.click();
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
 }
+var DUPF = {};                                              // seri -> [các file quét trùng]
+/** Seri dài/ngắn khác hẳn các seri cùng model (vd quét nhầm mã khác): {chỉ số: 1}. */
+function tinhLa(n) {
+  var LA = {};
+  n.tt.forEach(function (m) { var dem = {}, ids = n.g[m], best = 0, len = 0;
+    ids.forEach(function (i) { var l = String(sr[i].serial).length; dem[l] = (dem[l] || 0) + 1; if (dem[l] > best) { best = dem[l]; len = l; } });
+    if (ids.length >= 3) ids.forEach(function (i) { if (Math.abs(String(sr[i].serial).length - len) >= 3) LA[i] = 1; }); });
+  return LA;
+}
 function veNhap() {
   var o = $('nhap'); if (!o) return;
   if (!sr.length) { o.style.display = 'none'; o.innerHTML = ''; return; }
   var n = nhomNhap(), soCo = 0;
   sr.forEach(function (x) { if (CO_FILE[x.serial]) soCo++; });
-  var LA = {}, soLa = 0;                                  // seri dài/ngắn khác hẳn các seri cùng model (vd quét nhầm mã khác)
-  n.tt.forEach(function (m) { var dem = {}, ids = n.g[m], best = 0, len = 0;
-    ids.forEach(function (i) { var l = String(sr[i].serial).length; dem[l] = (dem[l] || 0) + 1; if (dem[l] > best) { best = dem[l]; len = l; } });
-    if (ids.length >= 3) ids.forEach(function (i) { if (Math.abs(String(sr[i].serial).length - len) >= 3) { LA[i] = 1; soLa++; } }); });
+  var LA = tinhLa(n), soLa = Object.keys(LA).length, soDup = sr.filter(function (x) { return DUPF[x.serial]; }).length;
   var h = '<h3>📋 NHÁP – ' + n.tt.length + ' model · ' + sr.length + ' seri</h3>' +
     (laNk() ? '<button type="button" class="b" id="chonNCC" style="font-size:15px;padding:10px">📄 ' + (NCC_TEN.length ? 'Thêm / đổi' : 'Chọn') + ' LIST NHÀ CUNG CẤP (so số lượng)</button>' +
       (NCC_TEN.length ? '<div class="s" style="font-size:13px">📄 ' + esc(NCC_TEN.join(', ')) + ': <b>' + nccTong() + ' cái</b> · ' + Object.keys(NCC).length + ' mã <a href="#" id="boNCC">✕ bỏ list</a></div>' + soNCC(n) : '') : '') +
     '<button type="button" class="b" id="taiTH" style="background:#2e7d32;color:#fff;border:none;font-size:16px;padding:11px">📥 TẢI FILE TỔNG HỢP (Excel)</button>' +
+    (soDup ? '<p class="nco">⚠️ ' + soDup + ' seri bị quét TRÙNG ở nhiều file (chỉ tính 1 lần) – xem tên file khi bấm 👁 hoặc trong file tổng hợp.</p>' : '') +
     (soLa ? '<p class="nco">⚠️ ' + soLa + ' seri dài/ngắn khác hẳn các seri cùng model (đánh dấu "seri lạ") – có thể quét nhầm mã khác, bấm 👁 kiểm tra.</p>' : '') +
     '<p class="s" style="font-size:13px">Kiểm tra trước khi lưu: sửa tên model sai rồi bấm ra ngoài · 👁 xem seri · ✕ bỏ. Chưa bấm LƯU thì chưa ghi gì vào file kho.</p>' +
     (soCo ? '<p class="nco">⚠️ ' + soCo + ' seri ĐÃ CÓ trong file kho (ghi chú cam bên dưới) – kiểm tra có quét trùng không.</p>' : '');
@@ -821,13 +868,14 @@ function veNhap() {
       (coG ? '<div class="nco">⚠️ ' + coG + ' seri đã có trong file kho</div>' : '') + (laG ? '<div class="nco">⚠️ ' + laG + ' seri lạ</div>' : '') +
       (NCC_TEN.length ? (function () { var q = nccSL(ma || m), d = ids.length - q; return '<div class="' + (d ? 'dmno' : 'dmok') + '">List NCC: ' + q + (d ? ' → ' + (d > 0 ? 'THỪA ' + d : 'THIẾU ' + (-d)) : ' ✓ khớp') + '</div>'; })() : '') +
       '<div class="nsr" id="nsr' + gi + '" style="display:' + (MO[m] ? 'block' : 'none') + '">' + ids.map(function (i) {
-        return '<div>' + esc(sr[i].serial) + (LA[i] ? ' <span class="nco">(seri lạ)</span>' : '') + (CO_FILE[sr[i].serial] ? ' <span class="nco">(đã có · ' + esc(CO_FILE[sr[i].serial]) + ')</span>' : '') + '<span data-xs="' + i + '">✕</span></div>';
+        return '<div>' + esc(sr[i].serial) + (LA[i] || DUPF[sr[i].serial] ? ' <span class="nco">(' + (LA[i] ? 'seri lạ' : '') + (LA[i] && DUPF[sr[i].serial] ? ', ' : '') + (DUPF[sr[i].serial] ? 'trùng ở ' + esc(DUPF[sr[i].serial].join(', ')) : '') + ' · file ' + esc(sr[i].f || '?') + ')</span>' : '') + (CO_FILE[sr[i].serial] ? ' <span class="nco">(đã có · ' + esc(CO_FILE[sr[i].serial]) + ')</span>' : '') + '<span data-xs="' + i + '">✕</span></div>';
       }).join('') + '</div></div>';
   });
   o.innerHTML = h; o.style.display = 'block';
   $('taiTH').onclick = taiTongHop;
   if ($('chonNCC')) $('chonNCC').onclick = function () { taiDM(); $('ncc').click(); };
-  if ($('boNCC')) $('boNCC').onclick = function () { NCC = {}; NCC_TEN = []; ve(); return false; };
+  if ($('boNCC')) $('boNCC').onclick = function () { NCC = {}; NCC_TEN = []; KS = {}; ve(); return false; };
+  ganKS();
   [].forEach.call(o.querySelectorAll('input[data-g]'), function (inp) {
     var gi = +inp.getAttribute('data-g');
     if (DM.length) ganDM(inp, $('nml' + gi), function (code) { inp.value = code; inp.onchange(); });
