@@ -46,6 +46,17 @@
  .pc input{width:54px;font-size:16px;padding:3px;margin-left:6px;border-radius:6px;border:1px solid #ccc}
  .plcu{background:#ede7f6;border-radius:8px;padding:6px 8px;margin:6px 0;font-size:14px}
  .pldu{color:#2e7d32}.plthieu{color:#c00}
+ #nhap{border:2px solid #2e7d32;border-radius:10px;padding:8px 10px;margin:12px 0;background:#f4fbf4;display:none}
+ #nhap h3{margin:2px 0 6px;color:#2e7d32;font-size:17px}
+ .nm{border-top:1px solid #cfe6cf;padding:8px 0}
+ .nm input{font-size:16px;padding:6px;width:62%;border:1px solid #aaa;border-radius:6px;font-weight:bold}
+ .nm .sl{display:inline-block;min-width:44px;text-align:center;font-weight:bold;color:#2e7d32;font-size:17px}
+ .nm button{padding:5px 9px;margin-left:4px;border-radius:6px;border:1px solid #1f4e79;background:#fff;color:#1f4e79;font-size:14px}
+ .nm button.do{border-color:#c00;color:#c00}
+ .nsr{display:none;margin:4px 0 0 6px;font-size:14px}
+ .nsr div{padding:3px 0;border-bottom:1px dotted #ddd}
+ .nsr span{color:#c00;margin-left:8px;padding:0 6px}
+ .nco{color:#e65100;font-size:12px}
  #plhuy{background:#fff;color:#c00;border:1px solid #c00;font-size:15px;padding:10px}
 </style>
 </head>
@@ -62,7 +73,8 @@
   <div id="ls" style="display:none"></div>
   <p><b>Chọn loại:</b></p>
   <div class="nhom">📥 NHẬP KHO</div>
-  <label><input type="radio" name="lo" value="nk_moi"> <b>Nhập mới</b></label>
+  <label><input type="radio" name="lo" value="nk_lo"> <b>Nhập khẩu theo lô</b> (ghi số lô, tải các file quét seri)</label>
+  <div id="slobox" style="display:none"><p><b>Số lô nhập khẩu (BẮT BUỘC):</b></p><input type="text" id="slo" placeholder="vd: LÔ 1222 hoặc số tờ khai / invoice"></div>
   <label><input type="radio" name="lo" value="nk_dp"> <b>Nhập dự phòng</b></label>
   <label><input type="radio" name="lo" value="nk_khac"> <b>Nhập khác</b> (phải ghi chú)</label>
   <div class="nhom">📤 XUẤT KHO</div>
@@ -72,6 +84,14 @@
   <div class="nhom">📦 KÝ GỬI</div>
   <label><input type="radio" name="lo" value="kg"> <b>Xuất ký gửi</b> (phải ghi tên khách)</label>
   <label><input type="radio" name="lo" value="kgv"> <b>Nhận lại hàng ký gửi</b> (khách trả về kho)</label>
+  <div class="nhom">🔧 CẢI TIẾN</div>
+  <label><input type="radio" name="lo" value="ct"> <b>Cải tiến</b> (đổi model A thành model B)</label>
+  <div id="ctbox" style="display:none">
+   <p><b>Model GỐC (trước cải tiến):</b></p><input type="text" id="ctA" placeholder="vd: SV-X0MM200A-B2LA">
+   <p><b>Model MỚI (sau cải tiến):</b></p><input type="text" id="ctB" placeholder="vd: SV-X0MM200A-N2LA">
+   <p><b>Số lượng:</b></p><input type="text" id="ctN" inputmode="numeric" placeholder="vd: 5">
+   <p class="s" style="font-size:13px">Chụp kèm ảnh tem máy sau cải tiến. App kiểm kho tự TRỪ model gốc, CỘNG model mới đúng số lượng này.</p>
+  </div>
   <div class="nhom">🤝 HÀNG MƯỢN</div>
   <label><input type="radio" name="lo" value="muon"> <b>Cho mượn</b></label>
   <label><input type="radio" name="lo" value="tra"> <b>Trả hàng mượn</b> (hàng mượn mang về kho)</label>
@@ -96,6 +116,7 @@
  <button class="b" id="chonfile">📄 Chọn file Excel serial</button>
  <p class="s" style="font-size:13px">Gửi được ảnh tem, ảnh chụp màn hình danh sách serial, hoặc file Excel của phần mềm quét mã – chung 1 lần cũng được.</p>
  <div id="dsf" class="s"></div>
+ <div id="nhap"></div>
  <div id="ds"></div>
  <button class="b" id="go"></button>
  <div id="tt"></div>
@@ -111,11 +132,11 @@ var Q = new URLSearchParams(location.search);
 var D = Q.get('d') || '', T = Q.get('t') || '', THU = Q.get('thu') === '1' ? 1 : 0, EXEC = Q.get('x') || '';
 var KK = Q.get('k') || '';   // link cố định của kho: chụp tem KHÔNG THEO ĐƠN (nhập / xuất / mượn / trả mượn / chuyển kho)
 var GC_BUOC = { nk_khac: 1, xk_lk: 1, kg: 1 };   // loại phải ghi chú
-var GC_MAU = { nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: nhập dự phòng lô 1222', nk_khac: 'Ghi rõ nhập gì, vì sao…',
+var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp lại chương trình…', nk_moi: 'vd: nhập mới theo lô hàng số 1222', nk_dp: 'vd: nhập dự phòng lô 1222', nk_khac: 'Ghi rõ nhập gì, vì sao…',
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '26/10/2026 (8 ảnh/khung)';   // 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '01/11/2026b (nhập khẩu theo lô + nháp + cải tiến)';   // 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -125,6 +146,9 @@ if (KK) {
   [].forEach.call(document.querySelectorAll('input[name=lo]'), function (r) { r.onchange = function () {
     var v = r.value;
     $('denbox').style.display = v === 'ck' ? 'block' : 'none';
+    $('slobox').style.display = v === 'nk_lo' ? 'block' : 'none';
+    $('ctbox').style.display = v === 'ct' ? 'block' : 'none';
+    ve();
     $('nvbox').style.display = (v === 'muon' || v === 'tra') ? 'block' : 'none';
     $('nvnhan').textContent = v === 'muon' ? 'Người mượn (bắt buộc):' : 'Người trả (không chọn thì bot tự tìm theo serial):';
     $('gcnhan').textContent = v === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : v === 'kg' ? 'Tên khách ký gửi (BẮT BUỘC):' : GC_BUOC[v] ? 'Ghi chú (BẮT BUỘC):' : 'Ghi chú (nếu có):';
@@ -443,9 +467,10 @@ function ve() {
   $('ds').innerHTML = h;
   [].forEach.call(document.querySelectorAll('#ds span'), function (s) { s.onclick = function () { if (!dangGui) { ds.splice(+s.getAttribute('data-i'), 1); ve(); lamLuoi(); } }; });
   $('go').style.display = (ds.length || sr.length) ? 'block' : 'none';
-  $('go').textContent = '✅ GỬI ' + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
+  $('go').textContent = (laNk() ? '💾 LƯU VÀO FILE KHO · ' : '✅ GỬI ') + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
   $('dsf').innerHTML = sr.length ? '📄 ' + esc(tenFile.join(', ')) + ': <b>' + sr.length + ' serial</b> <a href="#" id="bof">✕ bỏ</a>' : '';
-  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; ve(); return false; };
+  if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; SUA = []; ve(); return false; };
+  veNhap();
   $('chup').textContent = ds.length ? '📷 Chụp / chọn thêm ảnh' : '📷 Chụp / chọn ảnh tem';
   if (PL) demPl();
 }
@@ -532,7 +557,7 @@ function luoi(list, cb) {
   });
 }
 // File Excel/CSV: bot TỰ NHẬN cột nào là serial (giá trị khác nhau nhiều nhất), cột nào là model (chữ lặp lại); bỏ cột STT
-var TIEU_DE = /serial|^s\/?n$|^stt$|^mã|^model|^tên|^số/i;
+var TIEU_DE = /serial|^s\/?n$|^stt$|^mã|^model\s*:?\s*$|^tên|^số/i;   // 01/11: ô \"MODEL:SV-…\" là model thật, chỉ ô ghi đúng chữ \"Model\" mới là tiêu đề
 function sach(v) { return String(v == null ? '' : v).split('|').join('').trim(); }
 function doanCot(rows) {
   var n = 0, tk = [];
@@ -569,7 +594,7 @@ $('x').onchange = function () {
             co[a] = 1; sr.push({ serial: a, model: md }); dem++;
           });
         });
-        tenFile.push(f.name + ' (' + dem + ')'); ve(); lamFile();
+        tenFile.push(f.name + ' (' + dem + ')'); ve(); lamFile(); hoiNhap();
         if (!dem) alert('Không thấy serial trong file ' + f.name + '.');
       } catch (er) { alert('Không đọc được file ' + f.name + ': ' + er.message); }
     };
@@ -581,7 +606,7 @@ function kiem() { if (choChot) choChot(); }
 function gui() {
   if (dangGui || (!ds.length && !sr.length)) return;
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
-  var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '';
+  var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '', slo = '', ctA = '', ctB = '', ctN = 0;
   if (KK) {
     var r1 = document.querySelector('input[name=lo]:checked');
     if (!r1) { alert('Chọn loại: Nhập / Xuất / Ký gửi / Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
@@ -589,6 +614,13 @@ function gui() {
     if (lo === 'muon' && !nv) { alert('Chọn người mượn'); return; }
     if (GC_BUOC[lo] && !gc) { alert(lo === 'kg' ? 'Phải ghi TÊN KHÁCH ký gửi' : 'Loại này phải ghi chú lý do'); $('gc').focus(); return; }
     if (lo === 'ck') { var r2 = document.querySelector('input[name=den]:checked'); if (!r2) { alert('Chọn kho chuyển đến'); return; } den = r2.value; }
+    if (lo === 'ct') { ctA = $('ctA').value.trim(); ctB = $('ctB').value.trim(); ctN = Math.floor(Number($('ctN').value) || 0);
+      if (!ctA || !ctB) { alert('Nhập đủ MODEL GỐC và MODEL MỚI'); return; }
+      if (ctA.toUpperCase().replace(/\s/g, '') === ctB.toUpperCase().replace(/\s/g, '')) { alert('Model mới phải khác model gốc'); return; }
+      if (ctN < 1) { alert('Nhập SỐ LƯỢNG cải tiến'); $('ctN').focus(); return; }
+      if (!confirm('CẢI TIẾN ' + ctN + ' cái: ' + ctA + ' → ' + ctB + '?\nApp kiểm kho sẽ trừ ' + ctA + ' và cộng ' + ctB + '.')) return; }
+    if (lo === 'nk_lo') { slo = $('slo').value.trim(); if (!slo) { alert('Nhập SỐ LÔ nhập khẩu'); $('slo').focus(); return; }
+      if (!confirm('LƯU lô ' + slo + ': ' + sr.length + ' seri từ file' + (ds.length ? ' + ' + ds.length + ' ảnh' : '') + ' vào file kho?')) return; }
   }
   var cd = 'them';
   if (CO && !KK) {
@@ -602,13 +634,14 @@ function gui() {
     var thieuPl = PL.hang.filter(function (x) { return dsHien(x).length && canTru(x) && tongChon(x.ma) < canTru(x); }).map(function (x) { return x.ma + ' (chọn ' + tongChon(x.ma) + '/' + canTru(x) + ')'; });
     if (thieuPl.length && !confirm('⚠️ Chưa chọn đủ palet cho:\n' + thieuPl.join('\n') + '\n\nVẫn GỬI? (phần chưa chọn quản lý sẽ trừ tay trên app)')) return;
   }
+  if (hgFile) { clearTimeout(hgFile); hgFile = 0; lamFile(); }   // vừa sửa nháp -> tải lại danh sách seri mới nhất trước khi lưu
   try { localStorage.setItem('tenTem', ten); } catch (e) {}
   dangGui = true; $('go').disabled = true; $('chup').disabled = true; $('chonfile').disabled = true;
   var t0 = Date.now();
   var chot = function () {
     choChot = null;
     var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiKs[0] : '', gs: ds.length > 1 ? luoiKs.slice(0, soKhung()) : [], fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0,
-      pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0 };
+      pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0, slo: slo, sua: SUA, ctA: ctA, ctB: ctB, ctN: ctN };
     // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
     post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
     $('f').style.display = 'none';
@@ -625,6 +658,68 @@ function gui() {
   };
   if (chuaXong().cho) { $('tt').textContent = 'Đang gửi nốt ảnh…'; $('bar').style.display = 'block'; }
   kiem();
+}
+// ===== NHÁP (01/11/2026): xem lại seri từ file trước khi lưu – model chuẩn theo bot, gom model, sửa model, bỏ dòng =====
+var SUA = [], CO_FILE = {}, MO = {}, hgFile = 0;
+function laNk() { var r = document.querySelector('input[name=lo]:checked'); return !!(KK && r && r.value === 'nk_lo'); }
+function lamFileSau() { clearTimeout(hgFile); hgFile = setTimeout(function () { hgFile = 0; lamFile(); }, 700); }
+function hoiNhap() {
+  if (!sr.length) return;
+  $('nhap').style.display = 'block'; $('nhap').innerHTML = '<h3>📋 NHÁP</h3><p class="s">Đang chuẩn hóa model…</p>';
+  post({ act: 'nhap', d: D, kk: KK, t: T, thu: THU, sr: sr }).then(function (j) {
+    if (j && j.ok && j.ds && j.ds.length === sr.length) {
+      j.ds.forEach(function (x, i) { sr[i].model = x.model; if (x.co) CO_FILE[sr[i].serial] = x.co; });
+      lamFile();
+    }
+    ve();
+  }).catch(function () { ve(); });
+}
+function nhomNhap() {
+  var g = {}, tt = [];
+  sr.forEach(function (x, i) { var m = x.model || '(chưa rõ model)'; if (!g[m]) { g[m] = []; tt.push(m); } g[m].push(i); });
+  return { g: g, tt: tt };
+}
+function veNhap() {
+  var o = $('nhap'); if (!o) return;
+  if (!sr.length) { o.style.display = 'none'; o.innerHTML = ''; return; }
+  var n = nhomNhap(), soCo = 0;
+  sr.forEach(function (x) { if (CO_FILE[x.serial]) soCo++; });
+  var h = '<h3>📋 NHÁP – ' + n.tt.length + ' model · ' + sr.length + ' seri</h3>' +
+    '<p class="s" style="font-size:13px">Kiểm tra trước khi lưu: sửa tên model sai rồi bấm ra ngoài · 👁 xem seri · ✕ bỏ. Chưa bấm LƯU thì chưa ghi gì vào file kho.</p>' +
+    (soCo ? '<p class="nco">⚠️ ' + soCo + ' seri ĐÃ CÓ trong file kho (ghi chú cam bên dưới) – kiểm tra có quét trùng không.</p>' : '');
+  n.tt.forEach(function (m, gi) {
+    var ids = n.g[m], coG = ids.filter(function (i) { return CO_FILE[sr[i].serial]; }).length;
+    h += '<div class="nm"><input data-g="' + gi + '" value="' + esc(m) + '"> <span class="sl">' + ids.length + '</span>' +
+      '<button type="button" data-xem="' + gi + '">👁</button><button type="button" class="do" data-bo="' + gi + '">✕</button>' +
+      (coG ? '<div class="nco">⚠️ ' + coG + ' seri đã có trong file kho</div>' : '') +
+      '<div class="nsr" id="nsr' + gi + '" style="display:' + (MO[m] ? 'block' : 'none') + '">' + ids.map(function (i) {
+        return '<div>' + esc(sr[i].serial) + (CO_FILE[sr[i].serial] ? ' <span class="nco">(đã có · ' + esc(CO_FILE[sr[i].serial]) + ')</span>' : '') + '<span data-xs="' + i + '">✕</span></div>';
+      }).join('') + '</div></div>';
+  });
+  o.innerHTML = h; o.style.display = 'block';
+  [].forEach.call(o.querySelectorAll('input[data-g]'), function (inp) {
+    inp.onchange = function () {
+      if (dangGui) return;
+      var cu = n.tt[+inp.getAttribute('data-g')], moi = inp.value.trim().toUpperCase();
+      if (!moi || moi === cu) { inp.value = cu; return; }
+      n.g[cu].forEach(function (i) { sr[i].model = moi; });
+      if (cu !== '(chưa rõ model)') SUA.push({ a: cu, b: moi });
+      MO[moi] = MO[cu]; ve(); lamFileSau();
+    };
+  });
+  [].forEach.call(o.querySelectorAll('[data-xem]'), function (b) {
+    b.onclick = function () { var m = n.tt[+b.getAttribute('data-xem')]; MO[m] = !MO[m]; $('nsr' + b.getAttribute('data-xem')).style.display = MO[m] ? 'block' : 'none'; };
+  });
+  [].forEach.call(o.querySelectorAll('[data-bo]'), function (b) {
+    b.onclick = function () {
+      if (dangGui) return; var m = n.tt[+b.getAttribute('data-bo')];
+      if (!confirm('Bỏ cả model ' + m + ' (' + n.g[m].length + ' seri) khỏi lần lưu này?')) return;
+      sr = sr.filter(function (x) { return (x.model || '(chưa rõ model)') !== m; }); ve(); lamFileSau();
+    };
+  });
+  [].forEach.call(o.querySelectorAll('[data-xs]'), function (s) {
+    s.onclick = function () { if (dangGui) return; sr.splice(+s.getAttribute('data-xs'), 1); ve(); lamFileSau(); };
+  });
 }
 function loi(m) {
   alert('Chưa gửi được: ' + m + '\nBấm GỬI để thử lại.');
