@@ -110,6 +110,7 @@
    <p class="s" style="font-size:13px">Không thấy tên? Nhân viên nhắn mã NV của mình (vd MKT01) cho bot Zalo để đăng ký.</p></div>
   <p><b id="gcnhan">Ghi chú:</b></p>
   <input type="text" id="gc" placeholder="Ghi chú…">
+  <div id="ksbox" style="display:none;border:1px dashed #2e7d32;border-radius:8px;padding:8px;margin-top:8px"><p style="margin:0 0 4px"><b>📦 Hàng KHÔNG theo dõi seri</b> <small>(dây cáp, phụ kiện… – gõ vài chữ rồi BẤM CHỌN mã, gõ số lượng)</small></p><div id="ksds"></div><button type="button" id="ksadd" style="background:#2e7d32;color:#fff;border:none;border-radius:8px;padding:10px;width:100%;font-size:16px;margin-top:6px">＋ Thêm hàng không seri</button><p class="s" style="font-size:12.5px;margin:4px 0 0">Vẫn chụp ít nhất 1 ảnh (ảnh hàng hoặc ảnh phiếu). App kiểm kho trừ / cộng đúng số lượng gõ ở đây.</p></div>
  </div>
  <div id="gcdonbox" style="display:none"><p><b>Ghi chú</b> (nếu có):</p>
   <input type="text" id="gcdon" placeholder="vd: thiếu 1 cái gửi sau, hàng xước vỏ, gửi kèm phụ kiện…"></div>
@@ -144,7 +145,7 @@ var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp l
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '02/11/2026d (ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục)';   // 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '06/11/2026b (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -154,6 +155,7 @@ if (KK) {
   [].forEach.call(document.querySelectorAll('input[name=lo]'), function (r) { r.onchange = function () {
     var v = r.value;
     $('denbox').style.display = v === 'ck' ? 'block' : 'none';
+    $('ksbox').style.display = v === 'nk_lo' ? 'none' : 'block'; if (v !== 'nk_lo') { taiDM(); if (!KS2.length) { KS2.push({ m: '', q: '' }); veKs(); } }   // 06/11b
     $('slobox').style.display = v === 'nk_lo' ? 'block' : 'none';
     if (v === 'nk_lo') dsNhap();
     $('ctbox').style.display = v === 'ct' ? 'block' : 'none';
@@ -268,6 +270,8 @@ function kiemCk(so) {
       o.innerHTML = '<input type="text" class="tim" placeholder="Gõ / quét serial để tích nhanh rồi bấm Enter">' +
         '<button type="button" class="b tatca">☑ Tích tất cả (nhận đủ)</button>' +
         j.ds.map(function (x) { return '<label class="sr"><input type="checkbox" value="' + esc(x.sr) + '">' + esc(x.md) + ' · <b>' + esc(x.sr) + '</b></label>'; }).join('') +
+        ((j.ks || []).length ? '<p style="font-weight:bold;margin:10px 0 4px">Hàng không theo dõi seri – gõ SỐ NHẬN thực tế (đủ thì để nguyên):</p>' +
+          j.ks.map(function (x) { return '<div class="sr" style="display:flex;align-items:center;gap:8px">' + esc(x.m) + ' · gửi <b>' + x.q + '</b> · nhận <input type="number" min="0" max="' + x.q + '" data-ksm="' + esc(x.m) + '" data-ksq="' + x.q + '" value="' + x.q + '" style="width:70px;padding:6px;font-size:16px"></div>'; }).join('') : '') +
         '<p class="dem" style="font-weight:bold;color:#e65100"></p>' +
         '<button type="button" class="b xn" style="background:#2e7d32;color:#fff;border:none;font-weight:bold">✅ XÁC NHẬN ĐÃ NHẬN</button>';
       [].forEach.call(o.querySelectorAll('input[type=checkbox]'), function (c) { c.onchange = function () { demCk(so); }; });
@@ -285,12 +289,13 @@ function kiemCk(so) {
 function xacNhanCk(so) {
   var o = $('kn_' + so), ten = $('n').value.trim();
   if (!ten) { alert('Nhập / bấm TÊN của bạn ở ô "Người gửi" (người nhận hàng) trước.'); $('n').focus(); return; }
-  var co = [], cs = o.querySelectorAll('input[type=checkbox]');
+  var co = [], cs = o.querySelectorAll('input[type=checkbox]'), ks = {}, ksG = 0, ksN = 0;
   [].forEach.call(cs, function (c) { if (c.checked) co.push(c.value); });
-  var thieu = cs.length - co.length;
-  if (!confirm(thieu ? '⚠️ Còn ' + thieu + ' cái CHƯA tích – bot sẽ báo THIẾU ' + thieu + ' cái cho kho đi và quản lý.\nXác nhận nhận ' + co.length + '/' + cs.length + ' cái?' : 'Xác nhận đã nhận ĐỦ ' + cs.length + ' cái của phiếu ' + so + '?')) return;
+  [].forEach.call(o.querySelectorAll('[data-ksm]'), function (i) { var g = +i.dataset.ksq, v = Math.max(0, Math.min(g, Math.floor(+i.value || 0))); ks[i.dataset.ksm] = v; ksG += g; ksN += v; });
+  var tongG = cs.length + ksG, tongN = co.length + ksN, thieu = tongG - tongN;
+  if (!confirm(thieu ? '⚠️ Còn THIẾU ' + thieu + ' cái (seri chưa tích / số nhận ít hơn số gửi) – bot sẽ báo kho đi và quản lý.\nXác nhận nhận ' + tongN + '/' + tongG + ' cái?' : 'Xác nhận đã nhận ĐỦ ' + tongG + ' cái của phiếu ' + so + '?')) return;
   o.querySelector('.xn').disabled = true; o.querySelector('.xn').textContent = 'Đang ghi…';
-  post({ act: 'cknhan', kk: KK, t: T, thu: THU, so: so, n: ten, co: co }).then(function (j) {
+  post({ act: 'cknhan', kk: KK, t: T, thu: THU, so: so, n: ten, co: co, ks: ks }).then(function (j) {
     if (!j.ok) { alert('Chưa xác nhận được: ' + (j.err || 'lỗi')); o.querySelector('.xn').disabled = false; o.querySelector('.xn').textContent = '✅ XÁC NHẬN ĐÃ NHẬN'; return; }
     try { localStorage.setItem('tenTem', ten); } catch (e) {}
     alert('✅ Đã xác nhận nhận ' + j.nhan + ' cái' + (j.thieu ? '\n⚠️ Đã báo THIẾU ' + j.thieu + ' cái' : ''));
@@ -628,6 +633,11 @@ function gui() {
     if (lo === 'muon' && !nv) { alert('Chọn người mượn'); return; }
     if (GC_BUOC[lo] && !gc) { alert(lo === 'kg' ? 'Phải ghi TÊN KHÁCH ký gửi' : 'Loại này phải ghi chú lý do'); $('gc').focus(); return; }
     if (lo === 'ck') { var r2 = document.querySelector('input[name=den]:checked'); if (!r2) { alert('Chọn kho chuyển đến'); return; } den = r2.value; }
+    if (lo !== 'nk_lo') {                                        // 06/11b: hàng không theo dõi seri
+      var loiKs = '';
+      KS2.forEach(function (x, i) { if (!String(x.m).trim() && !x.q) return; var mm = dmCo(x.m); if (DM.length && !mm) loiKs = loiKs || ('Dòng ' + (i + 1) + ': mã "' + x.m + '" phải BẤM CHỌN trong danh sách gợi ý'); else if (!(Math.floor(+x.q) > 0)) loiKs = loiKs || ('Dòng ' + (i + 1) + ' (' + x.m + '): gõ SỐ LƯỢNG'); else ksr.push({ m: mm || String(x.m).trim(), q: Math.floor(+x.q) }); });
+      if (loiKs) { alert(loiKs); return; }
+    }
     if (lo === 'ct') { ctA = $('ctA').value.trim(); ctB = $('ctB').value.trim(); ctN = Math.floor(Number($('ctN').value) || 0);
       if (!ctA || !ctB) { alert('Chọn đủ MÃ GỐC và MÃ MỚI'); return; }
       if (DM.length && (!dmCo(ctA) || !dmCo(ctB))) { alert('Mã gốc và mã mới phải BẤM CHỌN trong danh sách gợi ý (mã có trong danh mục).'); return; }
@@ -640,6 +650,7 @@ function gui() {
       ksr = laNk() ? ksDs() : [];
       if (!confirm('LƯU lô ' + slo + ': ' + sr.length + ' seri từ file' + (ksr.length ? ' + ' + ksTong() + ' cái không theo dõi seri (' + ksr.length + ' mã)' : '') + (ds.length ? ' + ' + ds.length + ' ảnh' : '') + ' vào file kho?')) return; }
   }
+  if (ksr.length && lo !== 'nk_lo' && !confirm('Gửi kèm ' + ksr.reduce(function (t, x) { return t + x.q; }, 0) + ' cái hàng KHÔNG theo dõi seri:\n' + ksr.map(function (x) { return '• ' + x.m + ': ' + x.q; }).join('\n') + '\n\nĐúng chưa?')) return;
   var cd = 'them';
   if (CO && !KK) {
     var c = document.querySelector('input[name=cd]:checked');
@@ -718,6 +729,20 @@ function ganDM(inp, list, chon) {
 }
 // ===== NHÁP (01/11/2026): xem lại seri từ file trước khi lưu – model chuẩn theo bot, gom model, sửa model, bỏ dòng =====
 var SUA = [], CO_FILE = {}, MO = {}, hgFile = 0;
+/* 06/11b: danh sách hàng không theo dõi seri cho phiếu không theo đơn (trừ nhập khẩu lô – đã có mục riêng) */
+var KS2 = [];
+function veKs() {
+  var b = $('ksds'); if (!b) return;
+  b.innerHTML = KS2.map(function (x, i) { return '<div style="display:flex;gap:6px;align-items:flex-start;margin-top:6px"><div class="dmw" style="flex:1"><input type="text" id="ks2m' + i + '" value="' + esc(x.m) + '" placeholder="Mã hàng (gõ vài chữ)" autocomplete="off" style="margin:0"><div class="dml" id="ks2m' + i + 'l"></div><div id="ks2m' + i + 'k" class="' + (dmCo(x.m) ? 'dmok' : 'dmno') + '" style="font-size:12px">' + (x.m ? (dmCo(x.m) ? '✓ ' + esc(dmCo(x.m)) : 'Chưa chọn mã trong danh sách') : '') + '</div></div>' +
+    '<input type="text" inputmode="numeric" id="ks2q' + i + '" value="' + esc(x.q) + '" placeholder="SL" style="width:70px;margin:0"><button type="button" data-ks2x="' + i + '" style="background:#fff;color:#c00;border:1px solid #c00;border-radius:8px;padding:8px 10px">✕</button></div>'; }).join('');
+  KS2.forEach(function (x, i) {
+    var inp = $('ks2m' + i); ganDM(inp, $('ks2m' + i + 'l'), function (c) { KS2[i].m = c; inp.value = c; var k = $('ks2m' + i + 'k'); k.className = 'dmok'; k.textContent = '✓ ' + c; });
+    inp.addEventListener('input', function () { KS2[i].m = inp.value; });
+    $('ks2q' + i).oninput = function () { KS2[i].q = this.value.replace(/[^0-9]/g, ''); };
+  });
+  [].forEach.call(b.querySelectorAll('[data-ks2x]'), function (x) { x.onclick = function () { KS2.splice(+x.getAttribute('data-ks2x'), 1); veKs(); }; });
+}
+if ($('ksadd')) $('ksadd').onclick = function () { KS2.push({ m: '', q: '' }); veKs(); var i = KS2.length - 1; setTimeout(function () { var e = $('ks2m' + i); if (e) e.focus(); }, 50); };
 function laNk() { var r = document.querySelector('input[name=lo]:checked'); return !!(KK && r && r.value === 'nk_lo'); }
 function lamFileSau() { clearTimeout(hgFile); hgFile = setTimeout(function () { hgFile = 0; lamFile(); }, 700); }
 function hoiNhap() {
