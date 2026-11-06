@@ -145,7 +145,7 @@ var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp l
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '06/11/2026b (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '07/11/2026b (link đơn VẪN tự chọn sẵn palet khi model chỉ ở 1 palet như cũ; phiếu không theo đơn Kho HN có TRỪ PALET (chuyển kho, xuất bảo hành, linh kiện, ký gửi, cho mượn); nút GỬI LUÔN HIỆN – chưa có ảnh thì bấm là mở máy ảnh; TRANG TỰ LƯU NHÁP loại phiếu, kho đến, ghi chú, hàng không seri – tắt trang / tải lại mở lại vẫn còn, gửi xong tự xóa; cần bot 38c)';   // 06/11/2026b: (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -186,6 +186,7 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
         if (j.dsLoai.indexOf(r.value) < 0) { r.checked = false; r.parentNode.style.display = 'none'; } });
       if (j.ckCho) { $('btnck').style.display = 'block'; $('btnck').textContent = '📦 Hàng chuyển đến – CHỜ NHẬN (' + j.ckCho + ' phiếu)'; if (Q.get('ck') === '1') taiCk(); }
       $('den').innerHTML = (j.dsKho || []).map(function (x) { return '<label><input type="radio" name="den" value="' + esc(x.k) + '"> ' + esc(x.ten) + '</label>'; }).join('');
+      khoiPhucP();   // 07/11: mở lại phiếu đang nhập dở
     } else
     $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
     if (j.daCo && j.daCo.n) {
@@ -316,7 +317,7 @@ function taiPl() {
         $('plthu').onclick = function () { $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">Đang tải palet…</p>'; taiPl(); }; return; }
       if (j.an) return;
       PL = j; PLCHON = {};
-      PL.hang.forEach(function (h) { if (h.ds.length === 1) { var x = h.ds[0]; PLCHON[h.ma] = {}; PLCHON[h.ma][x.pl + '|' + x.m + '|' + x.k] = -1; } });   // chỉ 1 palet có model này -> chọn sẵn
+      PL.hang.forEach(function (h) { if (h.ds.length === 1) { var x = h.ds[0]; PLCHON[h.ma] = {}; PLCHON[h.ma][x.pl + '|' + x.m + '|' + x.k] = -1; } });   // chỉ 1 palet có model này -> chọn sẵn (07/11b: giữ như cũ theo ý chị)
       vePl();
     }).catch(function () { $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">⚠️ Mạng chậm, chưa tải được palet.</p><button type="button" class="b" id="plthu">🔄 Tải lại phần palet</button>';
       $('plthu').onclick = function () { $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">Đang tải palet…</p>'; taiPl(); }; });
@@ -343,7 +344,7 @@ function vePl() {
       (lai ? '<br><b style="color:#c00">🔄 Gửi LẠI: lần trừ này sẽ được HỦY, trừ lại theo lựa chọn dưới.</b>' : '') +
       '<button type="button" class="b" id="plhuy">❌ HỦY TRỪ PALET (trả hàng lại palet)</button></div>';
   }
-  h += '<p class="s" style="font-size:13px">Bấm palet đã lấy hàng – số lượng tự điền theo đơn, sửa được. Bấm lại để bỏ chọn. Bấm GỬI là app tự trừ.</p>';
+  h += '<p class="s" style="font-size:13px">Bấm palet đã lấy hàng (model chỉ ở 1 palet thì đã chọn sẵn) – số lượng tự điền theo đơn (đơn 2 kho: theo phần của kho này), sửa được. Không lấy từ palet thì bấm lại để BỎ CHỌN. Bấm GỬI là app tự trừ.</p>';
   PL.hang.forEach(function (x, i) {
     var can = canTru(x), dh = dsHien(x);
     if (!dh.length && !can) return;
@@ -420,6 +421,76 @@ function huyPl() {
   }).catch(function () { alert('Mạng lỗi, thử lại.'); $('plhuy').disabled = false; });
 }
 
+// ===== 07/11: TRỪ PALET cho PHIẾU KHÔNG THEO ĐƠN của Kho HN (chuyển kho, xuất bảo hành, xuất linh kiện, ký gửi, cho mượn) – cần bot 38c =====
+var PK_LOAI = { ck: 1, xk_dpbh: 1, xk_mbh: 1, xk_lk: 1, kg: 1, muon: 1 }, PK = null, PKCHON = {}, PKSEL = [], dangTaiPk = false;
+function loaiHT() { var r = document.querySelector('input[name=lo]:checked'); return r ? r.value : ''; }
+function capPk() {
+  if (!KK) return;
+  if (!PK_LOAI[loaiHT()]) { $('plbox').style.display = 'none'; return; }
+  if (PK === null) { taiPk(); return; }
+  if (PK.an) { $('plbox').style.display = 'none'; return; }
+  vePk();
+}
+function loiPk(t) { $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">⚠️ ' + esc(t) + '</p><button type="button" class="b" id="pkthu">🔄 Tải lại phần palet</button><p class="s" style="font-size:13px">Vẫn gửi phiếu bình thường được (quản lý trừ tay trên app palet).</p>'; $('pkthu').onclick = taiPk; }
+function taiPk() {
+  if (dangTaiPk) return; dangTaiPk = true;
+  $('plbox').style.display = 'block'; $('plbox').innerHTML = '<h3>📦 Trừ palet</h3><p class="s">Đang tải palet…</p>';
+  fetch(EXEC + '?api=templk&k=' + encodeURIComponent(KK) + '&t=' + encodeURIComponent(T) + (THU ? '&thu=1' : ''))
+    .then(function (r) { return r.json(); }).then(function (j) {
+      dangTaiPk = false;
+      if (!j.ok) return loiPk('Chưa tải được palet: ' + (j.err || 'lỗi'));
+      PK = j.an ? { an: 1 } : j; capPk();
+    }).catch(function () { dangTaiPk = false; loiPk('Mạng chậm hoặc bot chưa lên bản 38c – chưa tải được palet.'); });
+}
+function tenPk(c) { var d = (PK.hang || {})[c] || []; return d.length ? d[0].m : c; }
+function tongPk(c) { var n = 0, o = PKCHON[c] || {}; for (var k in o) n += Math.max(0, o[k] || 0); return n; }
+function vePk() {
+  var h = '<h3>📦 Trừ palet <small style="font-weight:normal;color:#444">(hàng lấy từ palet – app palet giảm tốc)</small></h3>' +
+    '<p class="s" style="font-size:13px">Có lấy hàng từ PALET thì gõ model → bấm chọn → bấm palet đã lấy → gõ SỐ LƯỢNG. Không lấy từ palet thì bỏ qua phần này.</p>' +
+    '<div class="dmw"><input type="text" id="pkq" placeholder="Gõ model (vd: 28 750)" autocomplete="off"><div class="dml" id="pkql"></div></div>';
+  PKSEL.forEach(function (c, i) {
+    var dsx = (PK.hang || {})[c] || [];
+    h += '<div class="plm">' + esc(tenPk(c)) + ' <small>· đã chọn ' + tongPk(c) + ' cái</small> <a href="#" data-pkx="' + i + '" style="color:#c00">✕ bỏ</a></div>';
+    if (!dsx.length) { h += '<div class="s plthieu">⚠️ App palet không còn model này</div>'; return; }
+    h += dsx.map(function (p) {
+      var key = p.pl + '|' + p.m + '|' + p.k, v = (PKCHON[c] || {})[key], on = v !== undefined;
+      return '<span class="pc' + (on ? ' on' : '') + '" data-c="' + esc(c) + '" data-k="' + esc(key) + '"><b>' + esc(p.pl) + '</b> · ô ' + esc(p.o) + ' · còn ' + p.sl +
+        (p.k && p.k !== PK.khoMd ? ' · [' + esc(p.k) + ']' : '') + (p.tt ? ' · ' + esc(p.tt) : '') +
+        (on ? '<input type="number" min="1" max="' + p.sl + '" value="' + (v > 0 ? v : '') + '" placeholder="SL">' : '') + '</span>';
+    }).join('');
+  });
+  $('plbox').innerHTML = h; $('plbox').style.display = 'block';
+  var inp = $('pkq'), list = $('pkql');
+  inp.addEventListener('input', function () {
+    var tk = inp.value.trim().split(/\s+/).map(chuanMa).filter(Boolean);
+    if (!tk.length) { list.style.display = 'none'; list.innerHTML = ''; return; }
+    var kq = Object.keys(PK.hang || {}).filter(function (c) { return PKSEL.indexOf(c) < 0 && tk.every(function (t) { return c.indexOf(t) >= 0; }); }).slice(0, 12);
+    list.innerHTML = kq.map(function (c) { var t = ((PK.hang || {})[c] || []).reduce(function (a, p) { return a + (Number(p.sl) || 0); }, 0); return '<div data-c="' + esc(c) + '">' + esc(tenPk(c)) + ' <small>(còn ' + t + ' trên palet)</small></div>'; }).join('') || '<div style="color:#999">Không có model này trên palet</div>';
+    list.style.display = 'block';
+    [].forEach.call(list.querySelectorAll('[data-c]'), function (d) { d.onmousedown = d.ontouchstart = function (e) { e.preventDefault(); PKSEL.push(d.getAttribute('data-c')); vePk(); }; });
+  });
+  inp.addEventListener('blur', function () { setTimeout(function () { list.style.display = 'none'; }, 200); });
+  [].forEach.call(document.querySelectorAll('#plbox [data-pkx]'), function (a) { a.onclick = function () { var c = PKSEL[+a.getAttribute('data-pkx')]; delete PKCHON[c]; PKSEL.splice(+a.getAttribute('data-pkx'), 1); vePk(); return false; }; });
+  [].forEach.call(document.querySelectorAll('#plbox .pc'), function (b) {
+    var c = b.getAttribute('data-c'), key = b.getAttribute('data-k'), q = b.querySelector('input');
+    if (q) { q.onclick = function (e) { e.stopPropagation(); }; q.oninput = function () { PKCHON[c][key] = Math.max(0, Math.floor(Number(q.value) || 0)); var t = b.parentNode.querySelector('[data-pkx]'); }; }
+    b.onclick = function () { var o = PKCHON[c] = PKCHON[c] || {}; if (o[key] !== undefined) delete o[key]; else { o[key] = 0; } vePk(); var q2 = document.querySelector('#plbox .pc.on[data-k="' + key.replace(/"/g, '') + '"] input'); if (q2 && o[key] !== undefined) q2.focus(); };
+  });
+}
+/** Các dòng trừ palet của phiếu: [{pl, m, k, sl}]; loi = palet đã bấm mà chưa gõ số / gõ quá tồn */
+function dsPk() {
+  var out = [], loi = '';
+  if (!PK || PK.an) return { ds: out, loi: loi };
+  PKSEL.forEach(function (c) {
+    var o = PKCHON[c] || {}, dsx = (PK.hang || {})[c] || [];
+    for (var k in o) { var a = k.split('|'), p = dsx.filter(function (x) { return x.pl + '|' + x.m + '|' + x.k === k; })[0];
+      if (!(o[k] > 0)) { loi = loi || ('Palet ' + a[0] + ' (' + a[1] + '): gõ SỐ LƯỢNG đã lấy, hoặc bấm lại palet để bỏ chọn'); continue; }
+      if (p && o[k] > p.sl) { loi = loi || ('Palet ' + a[0] + ' (' + a[1] + ') trên app chỉ còn ' + p.sl + ' – gõ lại số'); continue; }
+      out.push({ pl: a[0], m: a[1], k: a[2], sl: o[k] }); }
+  });
+  return { ds: out, loi: loi };
+}
+
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function chonTen(b) { $('n').value = b.textContent; danhDauTen(); }
 function danhDauTen() { var v = $('n').value; [].forEach.call(document.querySelectorAll('.tn'), function (b) { b.classList.toggle('on', b.textContent === v); }); }
@@ -483,8 +554,7 @@ function ve() {
   for (var i = 0; i < ds.length; i++) h += '<div><img src="data:image/jpeg;base64,' + ds[i].b + '"><span data-i="' + i + '">✕</span></div>';
   $('ds').innerHTML = h;
   [].forEach.call(document.querySelectorAll('#ds span'), function (s) { s.onclick = function () { if (!dangGui) { ds.splice(+s.getAttribute('data-i'), 1); ve(); lamLuoi(); } }; });
-  $('go').style.display = (ds.length || sr.length) ? 'block' : 'none';
-  $('go').textContent = (laNk() ? '💾 LƯU VÀO FILE KHO · ' : '✅ GỬI ') + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
+  capGo();
   $('dsf').innerHTML = sr.length ? '📄 ' + esc(tenFile.join(', ')) + ': <b>' + sr.length + ' serial</b> <a href="#" id="bof">✕ bỏ</a>' : '';
   if ($('bof')) $('bof').onclick = function () { sr = []; tenFile = []; fk = ''; SUA = []; DUPF = {}; ve(); return false; };
   veNhap();
@@ -620,10 +690,56 @@ $('x').onchange = function () {
     r.readAsArrayBuffer(f);
   });
 };
+/* 07/11/2026: nút GỬI – phiếu không theo đơn LUÔN hiện khi đã chọn loại / có hàng không seri (trước chỉ hiện khi có ảnh -> kho tưởng không có nút gửi) */
+function tenLoai() { var r = document.querySelector('input[name=lo]:checked'); if (!r) return ''; var b = r.parentNode.querySelector('b'); return b ? b.textContent : ''; }
+function coKs2() { return KS2.some(function (x) { return String(x.m).trim() || x.q; }); }
+function capGo() {
+  var coAnh = ds.length || sr.length, chon = KK && !!document.querySelector('input[name=lo]:checked');
+  var hien = coAnh || (KK && (chon || coKs2()));
+  $('go').style.display = hien ? 'block' : 'none';
+  if (!coAnh) { $('go').textContent = '📷 Chụp ít nhất 1 ảnh (hàng / phiếu) rồi GỬI'; return; }
+  $('go').textContent = (laNk() ? '💾 LƯU VÀO FILE KHO · ' : '✅ GỬI ' + (KK && tenLoai() ? 'PHIẾU ' + tenLoai().toUpperCase() + ' · ' : '')) + (ds.length ? ds.length + ' ẢNH' : '') + (ds.length && sr.length ? ' + ' : '') + (sr.length ? sr.length + ' SERIAL TỪ FILE' : '');
+}
+/* 07/11/2026: TỰ LƯU NHÁP phiếu không theo đơn trên máy (loại, kho đến, ghi chú, người mượn, hàng không seri, cải tiến) */
+var NHAP_KEY = 'temNhap_' + KK + (THU ? '_thu' : ''), hgLuuP = 0, daKhoiPhuc = false;
+function luuP() {
+  if (!KK || dangGui) return; clearTimeout(hgLuuP);
+  hgLuuP = setTimeout(function () {
+    try {
+      var r = document.querySelector('input[name=lo]:checked'), d2 = document.querySelector('input[name=den]:checked');
+      var o = { lo: r ? r.value : '', den: d2 ? d2.value : '', gc: $('gc').value, nv: $('nv').value, ks: KS2.filter(function (x) { return String(x.m).trim() || x.q; }),
+        ctA: $('ctA') ? $('ctA').value : '', ctB: $('ctB') ? $('ctB').value : '', ctN: $('ctN') ? $('ctN').value : '', ts: Date.now() };
+      if (!o.lo && !o.gc && !o.ks.length && !o.ctA && !o.ctB) { localStorage.removeItem(NHAP_KEY); return; }
+      localStorage.setItem(NHAP_KEY, JSON.stringify(o));
+    } catch (e) {}
+  }, 400);
+}
+function xoaP() { clearTimeout(hgLuuP); try { localStorage.removeItem(NHAP_KEY); } catch (e) {} }
+function khoiPhucP() {
+  if (!KK || daKhoiPhuc) return; daKhoiPhuc = true;
+  var o = null; try { o = JSON.parse(localStorage.getItem(NHAP_KEY) || 'null'); } catch (e) { o = null; }
+  if (!o || !o.ts || Date.now() - o.ts > 3 * 86400000) { xoaP(); return; }
+  if (o.lo) { var r = document.querySelector('input[name=lo][value="' + o.lo + '"]'); if (r && r.parentNode.style.display !== 'none') { r.checked = true; if (r.onchange) r.onchange(); } }
+  if (o.den) { var d2 = document.querySelector('input[name=den][value="' + o.den + '"]'); if (d2) d2.checked = true; }
+  if (o.gc) $('gc').value = o.gc;
+  if (o.nv) $('nv').value = o.nv;
+  if (o.ctA && $('ctA')) $('ctA').value = o.ctA; if (o.ctB && $('ctB')) $('ctB').value = o.ctB; if (o.ctN && $('ctN')) $('ctN').value = o.ctN;
+  if (o.ks && o.ks.length) { KS2.length = 0; o.ks.forEach(function (x) { KS2.push({ m: String(x.m || ''), q: String(x.q || '') }); }); $('ksbox').style.display = o.lo === 'nk_lo' ? 'none' : 'block'; veKs(); taiDM(veKs); }
+  var gio = new Date(o.ts), hh = ('0' + gio.getHours()).slice(-2) + ':' + ('0' + gio.getMinutes()).slice(-2) + ' ' + gio.getDate() + '/' + (gio.getMonth() + 1);
+  var b = document.createElement('div'); b.id = 'nhapP';
+  b.style.cssText = 'background:#fff8e1;border:1px solid #f9a825;border-radius:8px;padding:8px;margin:8px 0;font-size:14px';
+  b.innerHTML = '📝 Đã mở lại phiếu đang nhập dở (lưu lúc ' + hh + '). Kiểm tra lại rồi chụp ảnh và GỬI. <button type="button" id="xoaP" style="margin-left:6px;background:#fff;color:#c00;border:1px solid #c00;border-radius:6px;padding:4px 8px">✕ Bỏ nháp, làm phiếu mới</button>';
+  $('phieu').insertBefore(b, $('phieu').firstChild);
+  $('xoaP').onclick = function () { if (!confirm('Bỏ phiếu đang nhập dở và làm phiếu mới?')) return; xoaP(); location.reload(); };
+  capGo(); capPk();
+}
+if (KK) { document.addEventListener('input', function (e) { if (e.target && e.target.closest && e.target.closest('#phieu')) { luuP(); capGo(); } });
+  document.addEventListener('change', function (e) { if (e.target && e.target.closest && e.target.closest('#phieu')) { luuP(); capGo(); if (e.target.name === 'lo') capPk(); } }); }
 var choChot = null;
 function kiem() { if (choChot) choChot(); }
 function gui() {
-  if (dangGui || (!ds.length && !sr.length)) return;
+  if (dangGui) return;
+  if (!ds.length && !sr.length) { $('tt').textContent = '📷 Chụp / chọn ít nhất 1 ảnh (ảnh hàng hoặc ảnh phiếu), xong bấm lại nút GỬI.'; $('p').click(); return; }   // 07/11: phiếu chưa có ảnh -> mở máy ảnh luôn
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
   var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '', slo = '', ctA = '', ctB = '', ctN = 0, ksr = [];
   if (KK) {
@@ -659,6 +775,11 @@ function gui() {
     if (cd === 'lai' && !confirm('Hủy toàn bộ serial cũ của đơn này và thay bằng lần gửi này?')) return;
   }
   var plDs = dsPl();
+  if (KK) {                                                    // 07/11: phiếu không theo đơn Kho HN – trừ palet theo lựa chọn
+    plDs = [];
+    if (PK_LOAI[lo] && PK && !PK.an) { var pk = dsPk(); if (pk.loi) { alert(pk.loi); return; } plDs = pk.ds;
+      if (plDs.length && !confirm('App palet sẽ TRỪ:\n' + plDs.map(function (x) { return '• ' + x.pl + ' · ' + x.m + ': ' + x.sl; }).join('\n') + '\n\nĐúng chưa?')) return; }
+  }
   if (PL && !KK) {
     var thieuPl = PL.hang.filter(function (x) { return dsHien(x).length && canTru(x) && tongChon(x.ma) < canTru(x); }).map(function (x) { return x.ma + ' (chọn ' + tongChon(x.ma) + '/' + canTru(x) + ')'; });
     if (thieuPl.length && !confirm('⚠️ Chưa chọn đủ palet cho:\n' + thieuPl.join('\n') + '\n\nVẫn GỬI? (phần chưa chọn quản lý sẽ trừ tay trên app)')) return;
@@ -679,6 +800,7 @@ function gui() {
       (plDs.length ? '\n📦 App palet tự trừ: ' + plDs.map(function (x) { return x.pl + ' ' + x.m + ' ' + x.sl; }).join(', ') : '') +
       (!plDs.length && cd === 'lai' && PL && (PL.cu || []).length ? '\n↩️ Lần trừ palet cũ của đơn được hủy.' : '');
     $('ok').style.display = 'block';
+    xoaP();   // 07/11: gửi xong -> xóa nháp trên máy
   };
   if (ds.length > 1 && luoiKs.filter(Boolean).length < soKhung()) { clearTimeout(hgLuoi); luoiKs = []; var phien = ++gv; dungKhung(phien, kiem); }
   choChot = function () {
@@ -741,6 +863,7 @@ function veKs() {
     $('ks2q' + i).oninput = function () { KS2[i].q = this.value.replace(/[^0-9]/g, ''); };
   });
   [].forEach.call(b.querySelectorAll('[data-ks2x]'), function (x) { x.onclick = function () { KS2.splice(+x.getAttribute('data-ks2x'), 1); veKs(); }; });
+  if (typeof capGo === 'function') { capGo(); luuP(); }   // 07/11
 }
 if ($('ksadd')) $('ksadd').onclick = function () { KS2.push({ m: '', q: '' }); veKs(); var i = KS2.length - 1; setTimeout(function () { var e = $('ks2m' + i); if (e) e.focus(); }, 50); };
 function laNk() { var r = document.querySelector('input[name=lo]:checked'); return !!(KK && r && r.value === 'nk_lo'); }
