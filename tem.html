@@ -131,6 +131,7 @@
  <div id="tt"></div>
  <div id="bar"><i></i></div>
 </div>
+<div id="hxbox" style="display:none;margin:14px 0 6px;padding:10px;border:1px dashed #c62828;border-radius:8px"></div>
 <p id="ver" class="s" style="font-size:12px;color:#999;text-align:right"></p>
 <div id="ok">✅ Đã gửi<br><small id="kq"></small><br><br><small>Bạn có thể đóng trang này.</small></div>
 
@@ -145,7 +146,7 @@ var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp l
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '07/11/2026b (link đơn VẪN tự chọn sẵn palet khi model chỉ ở 1 palet như cũ; phiếu không theo đơn Kho HN có TRỪ PALET (chuyển kho, xuất bảo hành, linh kiện, ký gửi, cho mượn); nút GỬI LUÔN HIỆN – chưa có ảnh thì bấm là mở máy ảnh; TRANG TỰ LƯU NHÁP loại phiếu, kho đến, ghi chú, hàng không seri – tắt trang / tải lại mở lại vẫn còn, gửi xong tự xóa; cần bot 38c)';   // 06/11/2026b: (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '07/11/2026c (link đơn có nút 🚫 HỦY XUẤT – không giao, chị duyệt mới thực hiện; link đơn VẪN tự chọn sẵn palet khi model chỉ ở 1 palet như cũ; phiếu không theo đơn Kho HN có TRỪ PALET (chuyển kho, xuất bảo hành, linh kiện, ký gửi, cho mượn); nút GỬI LUÔN HIỆN – chưa có ảnh thì bấm là mở máy ảnh; TRANG TỰ LƯU NHÁP loại phiếu, kho đến, ghi chú, hàng không seri – tắt trang / tải lại mở lại vẫn còn, gửi xong tự xóa; cần bot 38c)';   // 06/11/2026b: (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -189,6 +190,7 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
       khoiPhucP();   // 07/11: mở lại phiếu đang nhập dở
     } else
     $('info').innerHTML = (j.kho ? '<b>' + esc(j.kho) + '</b> · ' : '') + esc(j.khach || '') + (j.sale ? ' · ' + esc(j.sale) : '');
+    if (!KK && (j.daSL || (j.daCo && j.daCo.n))) veHx(j.hx);   // 07/11b: nút HỦY XUẤT (chị duyệt)
     if (j.daCo && j.daCo.n) {
       CO = 1;
       $('hoi').innerHTML = '<div class="note"><b>Đơn này đã có ' + j.daCo.n + ' serial</b> (gửi lúc ' + esc(j.daCo.gio || '') + '). Lần này:' +
@@ -489,6 +491,28 @@ function dsPk() {
       out.push({ pl: a[0], m: a[1], k: a[2], sl: o[k] }); }
   });
   return { ds: out, loi: loi };
+}
+
+// ===== 07/11b: HỦY XUẤT đơn CRM (khách không lấy / không giao) – ai cũng bấm, CHỊ DUYỆT mới thực hiện (bot 38c) =====
+function veHx(hx) {
+  var b = $('hxbox'); b.style.display = 'block';
+  if (hx && hx.st === 'cho') { b.innerHTML = '⏳ <b>Đã đề nghị HỦY XUẤT</b> (' + esc(hx.ng || '') + ', ' + esc(hx.gio || '') + ') – đang chờ chị duyệt. Chưa duyệt thì đơn giữ nguyên.'; return; }
+  if (hx && hx.st === 'ok') { b.innerHTML = '❌ <b>Đơn đã HỦY XUẤT</b> (chị duyệt ' + esc(hx.gio || '') + ') – hàng để lại kho. Nếu đơn được ghi lại và xuất tiếp thì chụp tem bình thường.'; return; }
+  b.innerHTML = (hx && hx.st === 'no' ? '<p class="s" style="font-size:13px">Lần đề nghị trước chị KHÔNG duyệt (' + esc(hx.gio || '') + ').</p>' : '') +
+    '<button type="button" class="b" id="hxbtn" style="border-color:#c62828;color:#c62828">🚫 HỦY XUẤT – khách không lấy / không giao</button>' +
+    '<p class="s" style="font-size:12.5px">Bấm khi đơn ĐÃ chụp tem nhưng KHÔNG giao nữa. Bot gửi chị duyệt; chị duyệt xong app mới cộng trả hàng về kho.</p>';
+  $('hxbtn').onclick = function () {
+    var ten = $('n').value.trim();
+    if (!ten) { alert('Nhập / bấm TÊN của bạn ở ô "Người gửi" trước.'); $('n').focus(); return; }
+    var ld = prompt('Lý do hủy xuất (vd: khách không thanh toán, không giao):', '');
+    if (ld === null) return; ld = ld.trim(); if (!ld) { alert('Cần ghi lý do.'); return; }
+    if (!confirm('Đề nghị HỦY XUẤT đơn ' + D + '?\nLý do: ' + ld + '\n(Chị duyệt xong mới cộng hàng về kho)')) return;
+    $('hxbtn').disabled = true; $('hxbtn').textContent = 'Đang gửi…';
+    post({ act: 'hxde', d: D, t: T, thu: THU, n: ten, ld: ld }).then(function (j) {
+      if (!j.ok) { alert('Chưa gửi được: ' + (j.err || 'lỗi')); $('hxbtn').disabled = false; $('hxbtn').textContent = '🚫 HỦY XUẤT – khách không lấy / không giao'; return; }
+      alert('✅ Đã gửi chị duyệt hủy xuất.'); veHx({ st: 'cho', ng: ten, gio: 'vừa xong' });
+    }).catch(function () { alert('Mạng lỗi, thử lại.'); $('hxbtn').disabled = false; $('hxbtn').textContent = '🚫 HỦY XUẤT – khách không lấy / không giao'; });
+  };
 }
 
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
