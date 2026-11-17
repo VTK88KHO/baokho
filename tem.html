@@ -114,6 +114,7 @@
  </div>
  <div id="gcdonbox" style="display:none"><p><b>Ghi chú</b> (nếu có):</p>
   <input type="text" id="gcdon" placeholder="vd: thiếu 1 cái gửi sau, hàng xước vỏ, gửi kèm phụ kiện…"></div>
+ <div id="kpbox" style="display:none;border:1px solid #bf9000;border-radius:8px;padding:8px;margin:8px 0;background:#fff8e1"><p style="margin:0 0 4px"><b>📥 Hàng trả này nhập vào kho nào?</b> <small>(hàng không bán mới được nữa thì chọn kho phụ)</small></p><div id="kpds"></div></div>
  <div id="plbox" style="display:none"></div>
  <p><b>Người gửi:</b> <small>(bấm tên của bạn)</small></p>
  <div id="nut"></div>
@@ -146,7 +147,7 @@ var GC_MAU = { nk_lo: 'Ghi chú thêm (nếu có)', ct: 'vd: thay board, nạp l
   xk_dpbh: 'vd: bảo hành cho khách ABC, đơn DH…', xk_mbh: 'vd: đổi máy mới bảo hành cho khách ABC', xk_lk: 'vd: tháo nguồn từ máy mới để bảo hành tạm cho khách ABC',
   kg: 'Tên khách ký gửi, vd: Cty ABC – anh Nam', kgv: 'vd: khách ABC trả lại, hàng còn nguyên',
   muon: 'Ghi chú…', tra: 'vd: xước vỏ, thiếu dây…', ck: 'Ghi chú…' };
-var TRANG_VER = '07/11/2026c (link đơn có nút 🚫 HỦY XUẤT – không giao, chị duyệt mới thực hiện; link đơn VẪN tự chọn sẵn palet khi model chỉ ở 1 palet như cũ; phiếu không theo đơn Kho HN có TRỪ PALET (chuyển kho, xuất bảo hành, linh kiện, ký gửi, cho mượn); nút GỬI LUÔN HIỆN – chưa có ảnh thì bấm là mở máy ảnh; TRANG TỰ LƯU NHÁP loại phiếu, kho đến, ghi chú, hàng không seri – tắt trang / tải lại mở lại vẫn còn, gửi xong tự xóa; cần bot 38c)';   // 06/11/2026b: (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
+var TRANG_VER = '17/11/2026 (hàng TRẢ VỀ – đơn trả CRM, trả hàng mượn, nhận lại ký gửi – có mục "Nhập vào: Kho chính / Dự phòng / Tủ điện" để app kiểm kho không cộng nhầm vào kho chính; cần bot 38k) · 07/11/2026c (link đơn có nút 🚫 HỦY XUẤT – không giao, chị duyệt mới thực hiện; link đơn VẪN tự chọn sẵn palet khi model chỉ ở 1 palet như cũ; phiếu không theo đơn Kho HN có TRỪ PALET (chuyển kho, xuất bảo hành, linh kiện, ký gửi, cho mượn); nút GỬI LUÔN HIỆN – chưa có ảnh thì bấm là mở máy ảnh; TRANG TỰ LƯU NHÁP loại phiếu, kho đến, ghi chú, hàng không seri – tắt trang / tải lại mở lại vẫn còn, gửi xong tự xóa; cần bot 38c)';   // 06/11/2026b: (phiếu không theo đơn – chuyển kho, xuất, nhập… có mục HÀNG KHÔNG THEO DÕI SERI: chọn model danh mục + số lượng; cần bot 38b)';   // 06/11/2026: nhận chuyển kho có ô SỐ NHẬN hàng không seri · 02/11/2026d: ô TỔNG nhập kho / list NCC; báo rõ khi bot chưa nhận đề nghị danh mục. 01/11/2026h: nháp nhập khẩu TỰ LƯU lên Drive theo số lô (cần bot 37q) – tắt app, đổi máy vẫn mở lại ở mục "Nháp đang dở", thêm file quét bổ sung rồi mới lưu chính thức. 01/11/2026g: 01/11/2026g: mã có trong list NCC mà chưa quét -> hỏi kho có theo dõi seri không; chọn KHÔNG thì nhập số lượng (mặc định theo list NCC), nút chọn hàng loạt; số này được lưu vào kho (cần bot 37p). 01/11/2026f: 01/11/2026f: mỗi seri nhớ FILE QUÉT nguồn; file tổng hợp tab Chi tiết thêm cột File nguồn + Ghi chú (seri lạ, quét trùng ở file khác, đã có trong file kho); nháp hiện tên file cạnh seri lạ / trùng. 01/11/2026e: 01/11/2026e: nháp nhập khẩu có nút 📄 CHỌN LIST NHÀ CUNG CẤP (Excel: cột Model + Quantity) -> so SL thực nhập với SL list NCC từng mã; file tổng hợp thêm cột SL list NCC, chênh lệch, kết luận (dòng lệch xếp đầu). 01/11/2026d: 01/11/2026d: nháp có nút 📥 TẢI FILE TỔNG HỢP (Excel: Tổng hợp theo mã + Chi tiết seri) tải ngay trên máy; seri dài/ngắn bất thường so với cùng model được đánh dấu "seri lạ". 01/11/2026c: 01/11/2026c: cải tiến + nháp chọn MÃ HÀNG từ danh mục MISA (gõ vài ký tự rồi bấm chọn). 01/11/2026b: 01/11/2026b: thêm loại 🔧 CẢI TIẾN (model gốc, model mới, số lượng). 01/11/2026: "Nhập mới" đổi thành NHẬP KHẨU THEO LÔ (ô số lô) + bảng NHÁP khi chọn file (gom model, số lượng, seri, sửa model, bỏ dòng) trước khi LƯU. 26/10/2026: 26/10/2026: trên 8 ảnh chia mỗi 8 ảnh 1 khung (bot gửi mỗi khung 1 tin). 24/10/2026: gộp lại phần TRỪ PALET (app palet giảm tốc) bị mất khi đăng bản 23/10b. 23/10/2026b: ảnh lưới không khoảng trắng – mỗi hàng ảnh giãn kín bề ngang, nét tối đa
 var TOI_DA = 50;   // số ảnh tối đa mỗi lần gửi (bot đọc theo từng đợt 25 ảnh)
 var ds = [], sr = [], tenFile = [], dangGui = false, CO = 0;
 var $ = function (id) { return document.getElementById(id); };
@@ -163,11 +164,19 @@ if (KK) {
     if (v === 'ct') taiDM();
     ve();
     $('nvbox').style.display = (v === 'muon' || v === 'tra') ? 'block' : 'none';
+    kpHien(v === 'tra' || v === 'kgv');
     $('nvnhan').textContent = v === 'muon' ? 'Người mượn (bắt buộc):' : 'Người trả (không chọn thì bot tự tìm theo serial):';
     $('gcnhan').textContent = v === 'tra' ? 'Tình trạng hàng trả (xước, thiếu phụ kiện…):' : v === 'kg' ? 'Tên khách ký gửi (BẮT BUỘC):' : GC_BUOC[v] ? 'Ghi chú (BẮT BUỘC):' : 'Ghi chú (nếu có):';
     $('gc').placeholder = GC_MAU[v] || 'Ghi chú…';
   }; });
 }
+var KHO_PHU = [];   // 17/11: kho phụ (bot gửi) – hàng trả nhập vào Dự phòng / Tủ điện
+function veKp(chon) {
+  $('kpds').innerHTML = '<label><input type="radio" name="kp" value=""' + (chon ? '' : ' checked') + '> <b>Kho chính</b> (bán mới được – mặc định)</label>' +
+    KHO_PHU.map(function (k) { return '<label><input type="radio" name="kp" value="' + esc(k) + '"' + (chon === k ? ' checked' : '') + '> <b>' + esc(k) + '</b></label>'; }).join('');
+}
+function kpHien(on) { $('kpbox').style.display = on && KHO_PHU.length ? 'block' : 'none'; if (!on) { var r = document.querySelector('input[name=kp][value=""]'); if (r) r.checked = true; } }
+function kpChon() { if ($('kpbox').style.display === 'none') return ''; var r = document.querySelector('input[name=kp]:checked'); return r ? r.value : ''; }
 if (!KK) $('gcdonbox').style.display = 'block';
 if (THU) $('thu').style.display = 'block';
 try { var n0 = localStorage.getItem('tenTem'); if (n0) $('n').value = n0; } catch (e) {}
@@ -180,6 +189,8 @@ else fetch(EXEC + '?api=teminfo&' + (KK ? 'k=' + encodeURIComponent(KK) : 'd=' +
   .then(function (r) { return r.json(); }).then(function (j) {
     if (!j.ok) { $('info').textContent = j.err || 'Lỗi'; return; }
     $('ver').innerHTML = j.ver ? 'trang bản ' + TRANG_VER + ' · bot bản ' + esc(j.ver) : '<b style="color:#c00">⚠️ Bot đang chạy CODE CŨ – báo quản lý cập nhật (Triển khai → Phiên bản mới).</b>';
+    KHO_PHU = j.khoPhu || []; veKp(j.kp || '');
+    if (!KK) kpHien(!!j.tra);
     if (KK) {
       $('info').innerHTML = '<b>' + esc(j.kho || '') + '</b>';
       $('nv').innerHTML = '<option value="">— chọn mã nhân viên —</option>' + (j.dsNv || []).map(function (x) { return '<option value="' + esc(x.ma) + '">' + esc(x.ten) + '</option>'; }).join('');
@@ -766,6 +777,7 @@ function gui() {
   if (!ds.length && !sr.length) { $('tt').textContent = '📷 Chụp / chọn ít nhất 1 ảnh (ảnh hàng hoặc ảnh phiếu), xong bấm lại nút GỬI.'; $('p').click(); return; }   // 07/11: phiếu chưa có ảnh -> mở máy ảnh luôn
   var ten = $('n').value.trim(); if (!ten) { alert('Nhập tên người gửi'); return; }
   var lo = '', den = '', gc = KK ? '' : $('gcdon').value.trim(), nv = '', slo = '', ctA = '', ctB = '', ctN = 0, ksr = [];
+  var KP_GUI = kpChon();   // 17/11: kho phụ cho hàng trả
   if (KK) {
     var r1 = document.querySelector('input[name=lo]:checked');
     if (!r1) { alert('Chọn loại: Nhập / Xuất / Ký gửi / Cho mượn / Trả hàng mượn / Chuyển kho'); return; }
@@ -816,7 +828,7 @@ function gui() {
   var chot = function () {
     choChot = null;
     var o = { act: 'chot', d: D, kk: KK, lo: lo, den: den, gc: gc, nv: nv, t: T, thu: THU, id: B, ks: ds.map(function (x) { return x.k; }), g: ds.length > 1 ? luoiKs[0] : '', gs: ds.length > 1 ? luoiKs.slice(0, soKhung()) : [], fk: sr.length ? fk : '', n: ten, cd: cd, t0: t0,
-      pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0, slo: slo, sua: SUA, ctA: ctA, ctB: ctB, ctN: ctN, ksr: ksr, ksBo: Object.keys(KS).filter(function (k) { return KS[k].ks === false && KSNHO[String(k).toUpperCase()]; }) };
+      kp: KP_GUI, pl: plDs, plCo: PL && (PL.cu || []).length ? 1 : 0, slo: slo, sua: SUA, ctA: ctA, ctB: ctB, ctN: ctN, ksr: ksr, ksBo: Object.keys(KS).filter(function (k) { return KS[k].ks === false && KSNHO[String(k).toUpperCase()]; }) };
     // Gửi 1 tin rất nhỏ (vẫn tới máy chủ dù đã đóng trang) rồi báo xong NGAY
     post(o, true).then(function (j) { if (j && j.ok === false) alert('⚠️ Bot báo lỗi: ' + (j.err || '') + '\nBấm lại link để gửi lại.'); }).catch(function () {});
     $('f').style.display = 'none';
